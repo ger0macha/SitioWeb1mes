@@ -116,7 +116,7 @@
 <body>
   <!-- Pantalla de carta -->
   <div id="intro">
-    <img src="https://cdn-icons-png.flaticon.com/512/747/747310.png" alt="Carta" class="envelope" onclick="mostrarContenido()">
+    <img id="carta" src="https://cdn-icons-png.flaticon.com/512/1925/1925306.png" alt="Carta cerrada" class="envelope" onclick="mostrarContenido()">
     <p>Tocá la carta para abrir 💌</p>
   </div>
 
@@ -129,12 +129,18 @@
 
   <script>
     function mostrarContenido() {
-      document.getElementById('intro').style.opacity = '0';
+      const carta = document.getElementById('carta');
+      carta.src = "https://cdn-icons-png.flaticon.com/512/1925/1925282.png";
+
       setTimeout(() => {
+        document.getElementById('intro').style.opacity = '0'
+        setTimeout(() => {
         document.getElementById('intro').style.display = 'none';
         document.getElementById('main').style.display = 'flex';
         document.getElementById('main').style.opacity = '1';
-      }, 800);
+        }, 800);
+
+      }, 300);
     }
 
     // Contador de días
