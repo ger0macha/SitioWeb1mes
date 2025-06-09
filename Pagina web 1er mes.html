@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Para Vos 💌</title>
+  <style>
+    :root {
+      --bg: #e8f5e9;
+      --bg-dark: #1b4332;
+      --accent: #40916c;
+      --text: #1b4332;
+      --font: 'Segoe UI', sans-serif;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: var(--font);
+    }
+
+    body {
+      background: url('https://www.transparenttextures.com/patterns/leaf.png'),
+                  var(--bg);
+      background-repeat: repeat;
+      background-size: auto;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #intro, #main {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      transition: opacity 0.8s ease;
+    }
+
+    #intro {
+      background: url('https://www.transparenttextures.com/patterns/leaf.png'),
+                  var(--bg);
+      background-repeat: repeat;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .envelope {
+      width: 120px;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+
+    .envelope:hover {
+      transform: scale(1.05);
+    }
+
+    #intro p {
+      margin-top: 1rem;
+      font-size: 1.2rem;
+      color: var(--accent);
+    }
+
+    #main {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem;
+      background-color: rgba(255, 255, 255, 0.8);
+      border-radius: 1rem;
+      max-width: 90%;
+      margin: auto;
+    }
+
+    #main h1 {
+      font-size: 2rem;
+      color: var(--bg-dark);
+      margin-bottom: 1rem;
+    }
+
+    #main p {
+      font-size: 1.2rem;
+      color: var(--text);
+    }
+
+    #contador {
+      margin-top: 1rem;
+      font-size: 1.5rem;
+      color: var(--accent);
+    }
+
+    @media (max-width: 600px) {
+      #main h1 {
+        font-size: 1.5rem;
+      }
+
+      #main p {
+        font-size: 1rem;
+      }
+
+      #contador {
+        font-size: 1.2rem;
+      }
+
+      .envelope {
+        width: 90px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Pantalla de carta -->
+  <div id="intro">
+    <img src="https://cdn-icons-png.flaticon.com/512/747/747310.png" alt="Carta" class="envelope" onclick="mostrarContenido()">
+    <p>Tocá la carta para abrir 💌</p>
+  </div>
+
+  <!-- Contenido principal -->
+  <div id="main">
+    <h1>Feliz primer mes, mi amor 💖</h1>
+    <p>Este pequeño sitio guarda recuerdos, lugares y mucho cariño. Te amo mucho.</p>
+    <div id="contador"></div>
+  </div>
+
+  <script>
+    function mostrarContenido() {
+      document.getElementById('intro').style.opacity = '0';
+      setTimeout(() => {
+        document.getElementById('intro').style.display = 'none';
+        document.getElementById('main').style.display = 'flex';
+        document.getElementById('main').style.opacity = '1';
+      }, 800);
+    }
+
+    // Contador de días
+    const fechaInicio = new Date('2025-05-07');
+    const hoy = new Date();
+    const diffTiempo = hoy.getTime() - fechaInicio.getTime();
+    const dias = Math.floor(diffTiempo / (1000 * 3600 * 24));
+    document.getElementById('contador').innerText = `Llevamos ${dias} días juntos 🌿`;
+  </script>
+</body>
+</html>
