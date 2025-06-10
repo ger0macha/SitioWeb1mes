@@ -114,41 +114,68 @@
   </style>
 </head>
 <body>
+
+  <audio id="musica" src="assets/romeoyjulieta.mp3"></audio>
+
   <!-- Pantalla de carta -->
   <div id="intro">
-    <img id="carta" src="https://cdn-icons-png.flaticon.com/512/1925/1925306.png" alt="Carta cerrada" class="envelope" onclick="mostrarContenido()">
-    <p>Tocá la carta para abrir 💌</p>
+    <img id="carta" src="https://cdn-icons-png.flaticon.com/512/1925/1925306.png" alt="Carta cerrada" class="envelope" onclick="intentarAbrir()">
+    <p>Tocá la carta para abrir</p>
+    <div id="contador"></div>
   </div>
 
   <!-- Contenido principal -->
   <div id="main">
     <h1>Feliz primer mes, mi amor 💖</h1>
     <p>Este pequeño sitio guarda recuerdos, lugares y mucho cariño. Te amo mucho.</p>
-    <div id="contador"></div>
+    <div id="contador-main"></div>
   </div>
 
   <script>
-    function mostrarContenido() {
-      const carta = document.getElementById('carta');
-      carta.src = "https://cdn-icons-png.flaticon.com/512/1925/1925282.png";
+    const carta = document.getElementById('carta');
+    const intro = document.getElementById('intro');
+    const main = document.getElementById('main');
+    const musica = document.getElementById('musica');
+    const contador = document.getElementById('contador');
+    const contadorMain = document.getElementById('contador-main');
 
-      setTimeout(() => {
-        document.getElementById('intro').style.opacity = '0'
-        setTimeout(() => {
-        document.getElementById('intro').style.display = 'none';
-        document.getElementById('main').style.display = 'flex';
-        document.getElementById('main').style.opacity = '1';
-        }, 800);
-
-      }, 300);
-    }
-
-    // Contador de días
-    const fechaInicio = new Date('2025-05-07');
+    const fechaInicio = new Date('2025-05-14');
     const hoy = new Date();
-    const diffTiempo = hoy.getTime() - fechaInicio.getTime();
-    const dias = Math.floor(diffTiempo / (1000 * 3600 * 24));
-    document.getElementById('contador').innerText = `Llevamos ${dias} días juntos 🌿`;
+    const dias = Math.floor((hoy - fechaInicio) / (1000 * 60 * 60 * 24));
+
+    contador.innerText = `Llevamos ${dias} días juntos`;
+    contadorMain.innerText = `¡Felicidades! Llevamos ${dias} días juntos`;
+    
+    function intentarAbrir() {
+      const fechaDesbloqueo = new Date('2025-06-14');
+      if (hoy >= fechaDesbloqueo) {
+        abrirCarta();
+      } else {
+        alert("Todavia no! Esperá hasta el 14 de junio");
+      }
+      }
+    
+    function abrirCarta() {
+      carta.src = 'https://cdn-icons-png.flaticon.com/512/1925/1925282.png';
+
+      if (navigator.vibrate) {
+        navigator.vibrate([200,100,200]);
+      }
+
+    setTimeout(() => {
+      intro.style.opacity = '0';
+      setTimeout(() => {
+        intro.style.display = 'none';
+        main.style.display = 'flex';
+        main.style.opacity = '1';
+      }, 800);
+    }, 300);
+
+    musica.addEventListener('loadedmetadata', () => {
+      musica.currentTime = 834;
+      musica.play();
+    });
+  }
   </script>
 </body>
 </html>
