@@ -146,9 +146,11 @@
     contador.innerText = `Llevamos ${dias} días juntos`;
     contadorMain.innerText = `¡Felicidades! Llevamos ${dias} días juntos`;
     
+    const modoTester = true;
+
     function intentarAbrir() {
       const fechaDesbloqueo = new Date('2025-06-14');
-      if (hoy >= fechaDesbloqueo) {
+      if (modoTester || hoy >= fechaDesbloqueo) {
         abrirCarta();
       } else {
         alert("Todavia no! Esperá hasta el 14 de junio");
@@ -171,11 +173,12 @@
       }, 800);
     }, 300);
 
-    musica.addEventListener('loadedmetadata', () => {
-      musica.currentTime = 834;
-      musica.play();
-    });
+    musica.currentTime = 834;
+    musica.play().catch(error => {
+      console.warn("No se pudo reproducir el audio automáticamente:", error);
+    })
   }
+  
   </script>
 </body>
 </html>
