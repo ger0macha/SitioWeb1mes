@@ -2,295 +2,59 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Para Vos 💌</title>
-  <style>
-    html {
-      overflow: hidden;
-      height: 100%;
-    }
-
-    :root {
-      --bg: #e8f5e9;
-      --bg-dark: #1b4332;
-      --accent: #40916c;
-      --text: #1b4332;
-      --font: 'Segoe UI', sans-serif;
-    }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: var(--font);
-    }
-
-    body {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      flex-direction: column;
-      background: url('https://images.unsplash.com/photo-1686298804691-c7df01a856ef?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
-      background-size: cover;
-      background-position: center center;
-      background-repeat: no-repeat;
-      background-attachment: fixed;
-      background-color: var(--bg);
-      overflow: hidden;
-      height: 100%;
-    }
-
-    #intro, #main {
-      width: 100%;
-      max-width: 600px;
-      min-height: 80vh;
-      transition: opacity 0.8s ease;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      
-    }
-
-    #intro {
-      background: url('https://www.transparenttextures.com/patterns/leaf.png'),
-                  rgba(255, 255, 255, 0.4);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      background-repeat: repeat;
-      display: flex;
-      border-radius: 1rem;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      margin-top: 5vh;
-    }
-
-    .envelope {
-      width: 120px;
-      cursor: pointer;
-      transition: transform 0.3s ease;
-    }
-
-    .envelope:hover {
-      transform: scale(1.05);
-    }
-
-    #intro p {
-      margin-top: 1rem;
-      font-size: 1.2rem;
-      color: var(--accent);
-    }
-
-    #main {
-      position: relative;
-      display: flex;
-      opacity: 0;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      text-align: center;
-      padding: 2rem 2rem 4rem;
-      background-color: rgba(255, 255, 255, 0.5);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border-radius: 1rem;
-      max-width: 90%;
-      margin: auto;
-      margin-top: 5vh;
-      margin-bottom: 5vh;
-
-    }
-
-    #main h1 {
-      font-size: 3rem;
-      color: var(--bg-dark);
-      margin-bottom: 1rem;
-      margin-top: 1rem;
-    }
-
-    #main p {
-      font-size: 1.2rem;
-      color: var(--text);
-      margin-top: 5vh;
-    }
-
-    #contador-main {
-      position:absolute;
-      bottom: 1rem;
-      left: 0;
-      width: 100%;
-      text-align: center;
-      margin-top: 5vh;
-      font-size: 1.5rem;
-      color: var(--bg-dark);
-    }
-
-    @media (max-width: 600px) {
-      #main h1 {
-        font-size: 1.5rem;
-      }
-
-      #main p {
-        font-size: 1rem;
-      }
-
-      #contador {
-        font-size: 1.2rem;
-      }
-
-      .envelope {
-        width: 90px;
-      }
-    }
-.section {
-  text-align: center;
-  padding: 3rem 2rem;
-  color: var(--text);
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-.section h2 {
-  font-size: 2rem;
-  margin-bottom: 1rem;
-}
-.gallery img {
-  width: 150px;
-  margin: 10px;
-  border-radius: 1rem;
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-.gallery img:hover {
-  transform: scale(1.05);
-}
-
-#fullpage {
-  display: none;
-}
-  </style>
-
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullpage.js@4.0.20/dist/fullpage.min.css" />
-<script src="https://cdn.jsdelivr.net/npm/fullpage.js@4.0.20/dist/fullpage.min.js"></script>
-<!-- Leaflet.js para el mapa -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
-<!-- LightGallery para la galería -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@2.7.1/css/lightgallery-bundle.min.css" />
-<script src="https://cdn.jsdelivr.net/npm/lightgallery@2.7.1/lightgallery.umd.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/lightgallery@2.7.1/plugins/zoom/lg-zoom.umd.js"></script>
-
+  <link rel="stylesheet" href="styles.css" />
+  
+  <!-- FullPage.js -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullpage.js@4.0.20/dist/fullpage.min.css" />
+  
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  
+  <!-- LightGallery -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@2.7.1/css/lightgallery-bundle.min.css" />
 </head>
 <body>
 
   <audio id="musica" src="assets/romeoyjulieta.mp3"></audio>
 
-  <!-- Pantalla de carta -->
   <div id="intro">
-    <img id="carta" src="https://cdn-icons-png.flaticon.com/512/1925/1925306.png" alt="Carta cerrada" class="envelope" onclick="intentarAbrir()">
+    <img id="carta" src="https://cdn-icons-png.flaticon.com/512/1925/1925306.png" alt="Carta cerrada" />
     <p>Tocá la carta para abrir</p>
   </div>
 
-  <!-- Contenido principal -->
-  <div id="main">
-    <h1>¡Feliz primer mes mi amorcito!</h1>
-    <p>Hice este sitio web para rememorar el camino que llevamos hasta ahora, que si bien no extenso en tiempo, es extenso en experiencias y aun más importante, en amor. Te amo mucho Lucía</p>
-    <div id="contador-main"></div>
-  </div>
+  <div id="main" style="display:none;">
+    <div class="mensaje">
+      <h1>¡Feliz primer mes, amor!</h1>
+      <p>Este es un pequeño regalo digital para vos 💚</p>
+    </div>
 
-  <div id="fullpage">
-  <div class="section" id="section1">
-    <h2>Un mensajito más 💌</h2>
-    <p>Gracias por este mes lleno de amor. Sos todo lo que está bien.</p>
-  </div>
+    <div id="fullpage">
+      <div class="section" data-anchor="primer-seccion">
+        <h2>Un mensajito más 💌</h2>
+        <p>Gracias por hacer cada día tan especial. Te amo.</p>
+      </div>
 
-  <div class="section" id="section2">
-    <h2>Nuestros lugares 🗺️</h2>
-    <div id="mapa" style="width: 80%; height: 60vh; margin: auto; border-radius: 1rem;"></div>
-  </div>
+      <div class="section" data-anchor="lugares">
+        <h2>Nuestros lugares 🗺️</h2>
+        <div id="mapa-container"></div>
+      </div>
 
-  <div class="section" id="section3">
-    <h2>Recuerdos 📸</h2>
-    <div id="galeria" class="gallery">
-      <a href="fotos/foto1.jpg"><img src="fotos/thumb1.jpg" /></a>
-      <a href="fotos/foto2.jpg"><img src="fotos/thumb2.jpg" /></a>
-      <a href="fotos/foto3.jpg"><img src="fotos/thumb3.jpg" /></a>
+      <div class="section" data-anchor="memorias">
+        <h2>Recuerdos 📸</h2>
+        <div id="galeria-container">
+          <a href="fotos/foto1.jpg"><img src="fotos/thumb1.jpg" /></a>
+          <a href="fotos/foto2.jpg"><img src="fotos/thumb2.jpg" /></a>
+        </div>
+      </div>
     </div>
   </div>
-</div>
 
-
-  <script>
-    const carta = document.getElementById('carta');
-    const intro = document.getElementById('intro');
-    const main = document.getElementById('main');
-    const musica = document.getElementById('musica');
-    
-    const contadorMain = document.getElementById('contador-main');
-
-    const fechaInicio = new Date('2025-05-14');
-    const hoy = new Date();
-    const dias = Math.floor((hoy - fechaInicio) / (1000 * 60 * 60 * 24));
-    contadorMain.innerText = `¡Felicidades! Llevamos ${dias} días juntos`;
-    
-    const modoTester = true;
-
-    function intentarAbrir() {
-      const fechaDesbloqueo = new Date('2025-06-14');
-      if (modoTester || hoy >= fechaDesbloqueo) {
-        abrirCarta();
-      } else {
-        alert("Todavia no! Esperá hasta el 14 de junio");
-      }
-      }
-    
-    function abrirCarta() {
-      carta.src = 'https://cdn-icons-png.flaticon.com/512/1925/1925282.png';
-      if (navigator.vibrate) {
-        navigator.vibrate([200,100,200]);
-      }
-
-    setTimeout(() => {
-      intro.style.opacity = '0';
-      setTimeout(() => {
-        intro.style.display = 'none';
-        main.style.display = 'flex';
-        main.style.opacity = '1';
-      }, 800);
-    }, 300);
-
-    setTimeout(() => {
-      document.getElementById('fullpage').style.display = 'block';
-      new fullpage('#fullpage', {
-        autoScrolling: true,
-        navigation: true,
-        anchors: ['mensaje', 'mapa', 'galeria']
-      });
-    }, 1000);
-
-    musica.currentTime = 834;
-    musica.play().catch(error => {
-      console.warn("No se pudo reproducir el audio automáticamente:", error);
-    })
-  }
-
-// Leaflet
-const mapa = L.map('mapa').setView([-31.4167, -64.1833], 13); // Córdoba por defecto
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; OpenStreetMap'
-}).addTo(mapa);
-L.marker([-31.4167, -64.1833]).addTo(mapa).bindPopup('Nuestro lugar ❤️').openPopup();
-
-// LightGallery
-lightGallery(document.getElementById('galeria'), {
-  plugins: [lgZoom],
-  speed: 500
-});
-
-  
-
-  </script>
+  <script src="https://cdn.jsdelivr.net/npm/fullpage.js@4.0.20/dist/fullpage.min.js"></script>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lightgallery@2.7.1/lightgallery.umd.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lightgallery@2.7.1/plugins/zoom/lg-zoom.umd.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
