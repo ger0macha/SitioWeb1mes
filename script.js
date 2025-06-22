@@ -1,176 +1,222 @@
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('carta').addEventListener('click', () => {
-    // Cambiar imagen de la carta
-    document.getElementById('carta').src = 'https://cdn-icons-png.flaticon.com/512/1925/1925282.png';
-    
-    // Efecto de vibración si está disponible
-    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
-    
-    // Ocultar intro con animación
-    document.getElementById('intro').style.opacity = '0';
-    
-    setTimeout(() => {
-      document.getElementById('intro').style.display = 'none';
-      document.getElementById('main').style.display = 'block';
-      document.getElementById('main').style.opacity = '1';
-      
-      // Inicializar Fullpage.js
-      initFullpage();
-    }, 300);
-  });
-});
+// =============================================
+// CONFIGURACIÓN PRINCIPAL
+// =============================================
+const SHEET_ID = "1m5TOfOxH_itvSyxCQ5lvQEtH6HwZfH7bsdWryHK5diI";
+const SHEET_NAME = "ubi"; // Asegúrate que coincida con el nombre de tu hoja
 
-let fullpageInstance = null;
-
-function initFullpage() {
-  // Destruir instancia previa si existe
-  if (fullpageInstance) {
-    fullpage.destroy('all');
-  }
-  
-  fullpageInstance = new fullpage('#fullpage', {
-    licenseKey: 'OPEN-SOURCE-GPLV3-LICENSE',
-    autoScrolling: true,
-    scrollBar: false,
-    navigation: true,
-    anchors: ['primer-seccion', 'lugares', 'memorias'],
-    scrollingSpeed: 800,
-    initialSlide: 0,
-    afterRender: function() {
-        fullpage_api.moveTo('primer-seccion', 0);
-      initMap();
-      initGallery();
-    },
-    afterLoad: function(origin, destination, direction) {
-      // Asegurar que las secciones tengan altura correcta
-      document.querySelectorAll('.section').forEach(section => {
-        section.style.minHeight = window.innerHeight + 'px';
-      });
+// =============================================
+// FUNCIÓN PARA CARGAR DATOS DESDE SHEETS (CORREGIDA)
+// =============================================
+async function cargarDatosDesdeSheets() {
+  try {
+    // URL corregida usando opensheet.elk.sh
+    const url = `https://opensheet.elk.sh/${SHEET_ID}/${SHEET_NAME}`;
+    console.log("Cargando datos desde:", url);
+    
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Error HTTP ${response.status}: ${errorText}`);
     }
-  });
+    
+    const data = await response.json();
+    console.log("Datos recibidos:", data);
+    
+    // Validación y transformación de datos
+    if (!Array.isArray(data)) {
+      console.error("Los datos no son un array:", data);
+      return [];
+    }
+    
+    const ubicaciones = data
+      .filter(item => item.coordenadas && item.titulo && item.fecha) // Filtrar elementos válidos
+      .map(item => {
+        // Convertir coordenadas de string a array numérico
+        const coords = item.coordenadas.split(',').map(coord => {
+          const num = parseFloat(coord.trim());
+          return isNaN(num) ? 0 : num; // Manejar valores no numéricos
+        });
+        
+        return {
+          ...item,
+          coordenadas: coords
+        };
+      });
+    
+    console.log("Ubicaciones formateadas:", ubicaciones);
+    return ubicaciones;
+    
+  } catch (error) {
+    console.error("Error cargando datos:", error);
+    return [];
+  }
 }
 
-function initMap() {
-  const mapaContainer = document.getElementById('mapa-container');
-  mapaContainer.innerHTML = ''; // Limpiar contenedor
-  
-  const mapa = L.map(mapaContainer).setView([-31.4167, -64.1833], 13);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors'
-  }).addTo(mapa);
-  
-  L.marker([-31.4167, -64.1833])
-    .addTo(mapa)
-    .bindPopup('Nuestro lugar ❤️')
-    .openPopup();
-  
-  // Redimensionar mapa cuando esté visible
-  setTimeout(() => {
-    mapa.invalidateSize();
-    mapaContainer.style.opacity = '1';
-  }, 500);
-}
-
-function initGallery() {
-  lightGallery(document.getElementById('galeria-container'), {
-    plugins: [lgZoom],
-    speed: 500,
-    selector: 'a',
-    licenseKey: '0000-0000-0000-0000',
-    download: false
-  });
-}
-
-let mapa; // Variable global para el mapa
-let timeline; // Variable global para la línea de tiempo
-
-
-
-async function initMapAndTimeline() {
-  // 1. Cargar datos
-  const response = await fetch('ubicaciones.json');
-  const ubicaciones = await response.json();
-
-  // 2. Ordenar por fecha (si no lo están)
-  ubicaciones.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
-
-  // 3. Inicializar mapa
-  initMap(ubicaciones);
-
-  // 4. Inicializar timeline
-  initTimeline(ubicaciones);
-}
+// =============================================
+// FUNCIONES DE VISUALIZACIÓN (CON VALIDACIÓN)
+// =============================================
+let mapa, timeline;
 
 function initMap(ubicaciones) {
-  mapa = L.map('mapa-container').setView(ubicaciones[0].coordenadas, 13);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapa);
-
-  // Cluster de marcadores para mejor rendimiento
-  const markers = L.markerClusterGroup();
-
-  ubicaciones.forEach(ubicacion => {
-    if (ubicaciones.filter(u => 
-      u.coordenadas[0] === ubicacion.coordenadas[0] && 
-      u.coordenadas[1] === ubicacion.coordenadas[1]
-    ).length > 1) {
-      marker.setIcon(L.divIcon({
-        html: `<div class="marcador-multi">${ubicacion.icono}</div>`,
-        className: 'marcador-multi'
-      }));
+  try {
+    // Verificar que Leaflet esté disponible
+    if (typeof L === 'undefined') {
+      throw new Error("Leaflet no está cargado correctamente");
     }
-    const marker = L.marker(ubicacion.coordenadas, {
-      icon: L.divIcon({
-        html: `<div class="marcador-mapa">${ubicacion.icono || '📍'}</div>`,
-        className: 'marcador-personalizado'
-      })
-    }).bindPopup(`
-      <h3>${ubicacion.titulo}</h3>
-      <p>${ubicacion.descripcion}</p>
-      ${ubicacion.foto ? `<img src="${ubicacion.foto}" style="max-height:150px; border-radius:8px;">` : ''}
-      <small>${new Date(ubicacion.fecha).toLocaleDateString('es-ES')}</small>
-    `);
-
-    markers.addLayer(marker);
-  });
-
-  mapa.addLayer(markers);
-  mapa.fitBounds(markers.getBounds());
+    
+    // Verificar que hay ubicaciones
+    if (!ubicaciones.length) {
+      console.warn("No hay ubicaciones para mostrar en el mapa");
+      return;
+    }
+    
+    const container = document.getElementById('mapa-container');
+    if (!container) {
+      throw new Error("Contenedor del mapa no encontrado");
+    }
+    
+    // Crear instancia del mapa
+    mapa = L.map(container).setView(ubicaciones[0].coordenadas, 13);
+    
+    // Capa base del mapa
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}/.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(mapa);
+    
+    // Agregar marcadores
+    ubicaciones.forEach(u => {
+      if (u.coordenadas.length === 2 && !isNaN(u.coordenadas[0])) {
+        L.marker(u.coordenadas)
+          .bindPopup(`<b>${u.titulo}</b><p>${u.descripcion}</p>`)
+          .addTo(mapa);
+      }
+    });
+    
+  } catch (error) {
+    console.error("Error inicializando mapa:", error);
+  }
 }
 
 function initTimeline(ubicaciones) {
-  const timelineData = {
-    events: ubicaciones.map(ubicacion => ({
-      start_date: {
-        year: ubicacion.fecha.split('-')[0],
-        month: ubicacion.fecha.split('-')[1],
-        day: ubicacion.fecha.split('-')[2]
-      },
-      text: {
-        headline: ubicacion.titulo,
-        text: `<p>${ubicacion.descripcion}</p>
-               ${ubicacion.foto ? `<img src="${ubicacion.foto}" style="max-height:200px;">` : ''}`
-      }
-    }))
-  };
-
-  timeline = new TL.Timeline('timeline-container', timelineData);
-
-  // Sincronización mapa-timeline
-  timeline.on('click', (e) => {
-    const slideIndex = e.target.closest('.tl-slide')?.getAttribute('data-slide-index');
-    if (slideIndex) {
-      const coords = ubicaciones[slideIndex].coordenadas;
-      mapa.flyTo(coords, 15, { duration: 1 });
+  try {
+    // Verificar que TimelineJS esté disponible
+    if (typeof TL === 'undefined') {
+      console.warn("TimelineJS no está cargado");
+      return;
     }
-  });
+    
+    // Verificar que hay ubicaciones
+    if (!ubicaciones.length) {
+      console.warn("No hay ubicaciones para mostrar en la línea de tiempo");
+      return;
+    }
+    
+    const container = document.getElementById('timeline-container');
+    if (!container) {
+      throw new Error("Contenedor de timeline no encontrado");
+    }
+    
+    // Preparar datos para TimelineJS
+    const timelineData = {
+      events: ubicaciones.map(u => ({
+        start_date: {
+          year: u.fecha.split('-')[0] || "2025",
+          month: u.fecha.split('-')[1] || "01",
+          day: u.fecha.split('-')[2] || "01"
+        },
+        text: {
+          headline: u.titulo,
+          text: u.descripcion
+        }
+      }))
+    };
+    
+    timeline = new TL.Timeline(container, timelineData);
+    
+  } catch (error) {
+    console.error("Error inicializando timeline:", error);
+  }
 }
 
-// Inicialización cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', initMapAndTimeline);
-
-mapa.on('popupopen', (e) => {
-  const img = e.popup._content.querySelector('.lazy-image');
-  if (img && img.dataset.src && !img.innerHTML) {
-    img.innerHTML = `<img src="${img.dataset.src}" style="max-height:150px;">`;
+// =============================================
+// INICIALIZACIÓN DE LA APLICACIÓN (MEJORADA)
+// =============================================
+document.addEventListener('DOMContentLoaded', async () => {
+  // Elemento para mostrar errores
+  const errorContainer = document.createElement('div');
+  errorContainer.id = 'error-message';
+  errorContainer.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background: #ff6b6b;
+    color: white;
+    padding: 15px;
+    text-align: center;
+    z-index: 10000;
+    display: none;
+    font-family: Arial, sans-serif;
+  `;
+  document.body.prepend(errorContainer);
+  
+  try {
+    // 1. Cargar datos
+    const ubicaciones = await cargarDatosDesdeSheets();
+    
+    // 2. Ordenar por fecha
+    ubicaciones.sort((a, b) => {
+      try {
+        return new Date(a.fecha) - new Date(b.fecha);
+      } catch {
+        return 0;
+      }
+    });
+    
+    // 3. Inicializar componentes
+    initMap(ubicaciones);
+    initTimeline(ubicaciones);
+    
+    // 4. Inicializar Fullpage.js si existe
+    if (typeof fullpage !== 'undefined') {
+      try {
+        new fullpage('#fullpage', {
+          licenseKey: 'OPEN-SOURCE-GPLV3-LICENSE',
+          afterRender: () => {
+            setTimeout(() => {
+              if (mapa) mapa.invalidateSize();
+            }, 500);
+          },
+          onLeave: (origin, destination) => {
+            if (destination.index === 1 && mapa) {
+              setTimeout(() => mapa.invalidateSize(), 300);
+            }
+          }
+        });
+      } catch (error) {
+        console.error("Error inicializando Fullpage.js:", error);
+      }
+    }
+    
+    // 5. Mostrar mensaje si no hay datos
+    if (ubicaciones.length === 0) {
+      showError("No se pudieron cargar los datos. Por favor verifica tu conexión.");
+    }
+    
+  } catch (error) {
+    console.error("Error crítico en la aplicación:", error);
+    showError(`Error crítico: ${error.message}`);
+  }
+  
+  function showError(message) {
+    console.error(message);
+    errorContainer.textContent = message;
+    errorContainer.style.display = 'block';
+    
+    // Ocultar después de 10 segundos
+    setTimeout(() => {
+      errorContainer.style.display = 'none';
+    }, 10000);
   }
 });
