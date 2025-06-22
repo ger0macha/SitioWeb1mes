@@ -2,50 +2,43 @@
 // CONFIGURACIÓN PRINCIPAL
 // =============================================
 const SHEET_ID = "1m5TOfOxH_itvSyxCQ5lvQEtH6HwZfH7bsdWryHK5diI";
-const SHEET_NAME = "ubi"; // Asegúrate que coincida con el nombre de tu hoja
+const SHEET_NAME = "ubi";
+
+// =============================================
+// VARIABLES GLOBALES
+// =============================================
+let mapa, fullpageInstance;
 
 // =============================================
 // FUNCIÓN PARA CARGAR DATOS DESDE SHEETS (CORREGIDA)
 // =============================================
 async function cargarDatosDesdeSheets() {
   try {
-    // URL corregida usando opensheet.elk.sh
     const url = `https://opensheet.elk.sh/${SHEET_ID}/${SHEET_NAME}`;
-    console.log("Cargando datos desde:", url);
-    
     const response = await fetch(url);
     
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Error HTTP ${response.status}: ${errorText}`);
-    }
+    if (!response.ok) throw new Error(`Error HTTP ${response.status}`);
     
     const data = await response.json();
-    console.log("Datos recibidos:", data);
     
-    // Validación y transformación de datos
-    if (!Array.isArray(data)) {
-      console.error("Los datos no son un array:", data);
-      return [];
-    }
-    
-    const ubicaciones = data
-      .filter(item => item.coordenadas && item.titulo && item.fecha) // Filtrar elementos válidos
-      .map(item => {
-        // Convertir coordenadas de string a array numérico
-        const coords = item.coordenadas.split(',').map(coord => {
-          const num = parseFloat(coord.trim());
-          return isNaN(num) ? 0 : num; // Manejar valores no numéricos
-        });
-        
-        return {
-          ...item,
-          coordenadas: coords
-        };
-      });
-    
-    console.log("Ubicaciones formateadas:", ubicaciones);
-    return ubicaciones;
+    // Procesamiento especial para el formato de tu sheet
+    return data.map(item => {
+      // Construye el array de coordenadas desde las columnas separadas
+      const coordenadas = [];
+      if (item['coordenadas/0'] && item['coordenadas/1']) {
+        coordenadas.push(Number(item['coordenadas/0']));
+        coordenadas.push(Number(item['coordenadas/1']));
+      }
+      
+      return {
+        titulo: item.titulo || 'Sin título',
+        fecha: item.fecha || '',
+        descripcion: item.descripcion || '',
+        icono: item.icono || '❤️',
+        foto: item.foto || '',
+        coordenadas: coordenadas
+      };
+    }).filter(item => item.coordenadas.length === 2); // Solo items con coordenadas válidas
     
   } catch (error) {
     console.error("Error cargando datos:", error);
@@ -54,169 +47,129 @@ async function cargarDatosDesdeSheets() {
 }
 
 // =============================================
-// FUNCIONES DE VISUALIZACIÓN (CON VALIDACIÓN)
+// INICIALIZACIÓN DE COMPONENTES
 // =============================================
-let mapa, timeline;
-
-function initMap(ubicaciones) {
-  try {
-    // Verificar que Leaflet esté disponible
-    if (typeof L === 'undefined') {
-      throw new Error("Leaflet no está cargado correctamente");
-    }
-    
-    // Verificar que hay ubicaciones
-    if (!ubicaciones.length) {
-      console.warn("No hay ubicaciones para mostrar en el mapa");
-      return;
-    }
-    
-    const container = document.getElementById('mapa-container');
-    if (!container) {
-      throw new Error("Contenedor del mapa no encontrado");
-    }
-    
-    // Crear instancia del mapa
-    mapa = L.map(container).setView(ubicaciones[0].coordenadas, 13);
-    
-    // Capa base del mapa
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}/.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-    }).addTo(mapa);
-    
-    // Agregar marcadores
-    ubicaciones.forEach(u => {
-      if (u.coordenadas.length === 2 && !isNaN(u.coordenadas[0])) {
-        L.marker(u.coordenadas)
-          .bindPopup(`<b>${u.titulo}</b><p>${u.descripcion}</p>`)
-          .addTo(mapa);
-      }
-    });
-    
-  } catch (error) {
-    console.error("Error inicializando mapa:", error);
+// Reemplaza completamente la función initMap() por esta versión mejorada:
+async function initMap() {
+  const ubicaciones = await cargarDatosDesdeSheets();
+  const container = document.getElementById('mapa-container');
+  
+  if (!ubicaciones.length) {
+    container.innerHTML = '<p class="error-mapa">No hay ubicaciones para mostrar</p>';
+    return;
   }
+
+  // Limpiar y preparar contenedor
+  container.innerHTML = '<div id="map" style="height: 100%; width: 100%;"></div>';
+
+  // Crear mapa centrado en la primera ubicación
+  mapa = L.map('map').setView(ubicaciones[0].coordenadas, 13);
+  
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap'
+  }).addTo(mapa);
+
+  // Agregar marcadores con iconos personalizados
+  ubicaciones.forEach((ubicacion, index) => {
+    const marker = L.marker(ubicacion.coordenadas, {
+      icon: L.divIcon({
+        html: `<div style="
+          background: #e63946;
+          color: white;
+          border-radius: 50%;
+          width: 30px;
+          height: 30px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: 2px solid white;
+          font-size: 14px;
+        ">${ubicacion.icono}</div>`,
+        className: 'marcador-personalizado'
+      })
+    }).bindPopup(`
+      <div class="popup-content">
+        <h3>${ubicacion.titulo}</h3>
+        <p>${ubicacion.descripcion}</p>
+        <small>${ubicacion.fecha}</small>
+        ${ubicacion.foto ? `
+        <a href="${ubicacion.foto}" class="gallery-item" data-sub-html="<h4>${ubicacion.titulo}</h4><p>${ubicacion.descripcion}</p>">
+         <img src="${ubicacion.foto}" class="popup-thumb">
+        </a>` : ''}
+      </div>
+    `);
+    
+    marker.addTo(mapa);
+  });
+
+  // Ajustar el zoom para mostrar todos los marcadores
+  setTimeout(() => {
+    mapa.invalidateSize();
+    const markerGroup = new L.featureGroup(ubicaciones.map(u => L.marker(u.coordenadas)));
+    mapa.fitBounds(markerGroup.getBounds().pad(0.2));
+  }, 500);
 }
 
-function initTimeline(ubicaciones) {
-  try {
-    // Verificar que TimelineJS esté disponible
-    if (typeof TL === 'undefined') {
-      console.warn("TimelineJS no está cargado");
-      return;
+function initGallery() {
+  lightGallery(document.getElementById('galeria-container'), {
+    plugins: [lgZoom],
+    speed: 500,
+    download: false
+  });
+}
+
+function initFullpage() {
+  if (fullpageInstance) fullpage.destroy('all');
+  
+  fullpageInstance = new fullpage('#fullpage', {
+    licenseKey: 'OPEN-SOURCE-GPLV3-LICENSE',
+    autoScrolling: true,
+    scrollBar: false,
+    navigation: true,
+    anchors: ['primer-seccion', 'lugares', 'memorias'],
+    scrollingSpeed: 800,
+    afterLoad: function(origin, destination) {
+      if (destination.anchor === 'lugares' && mapa) {
+        setTimeout(() => mapa.invalidateSize(), 300);
+      }
     }
-    
-    // Verificar que hay ubicaciones
-    if (!ubicaciones.length) {
-      console.warn("No hay ubicaciones para mostrar en la línea de tiempo");
-      return;
-    }
-    
-    const container = document.getElementById('timeline-container');
-    if (!container) {
-      throw new Error("Contenedor de timeline no encontrado");
-    }
-    
-    // Preparar datos para TimelineJS
-    const timelineData = {
-      events: ubicaciones.map(u => ({
-        start_date: {
-          year: u.fecha.split('-')[0] || "2025",
-          month: u.fecha.split('-')[1] || "01",
-          day: u.fecha.split('-')[2] || "01"
-        },
-        text: {
-          headline: u.titulo,
-          text: u.descripcion
-        }
-      }))
-    };
-    
-    timeline = new TL.Timeline(container, timelineData);
-    
-  } catch (error) {
-    console.error("Error inicializando timeline:", error);
-  }
+  });
 }
 
 // =============================================
-// INICIALIZACIÓN DE LA APLICACIÓN (MEJORADA)
+// MECANISMO DE CARTA (RESTAURADO)
 // =============================================
-document.addEventListener('DOMContentLoaded', async () => {
-  // Elemento para mostrar errores
-  const errorContainer = document.createElement('div');
-  errorContainer.id = 'error-message';
-  errorContainer.style.cssText = `
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    background: #ff6b6b;
-    color: white;
-    padding: 15px;
-    text-align: center;
-    z-index: 10000;
-    display: none;
-    font-family: Arial, sans-serif;
-  `;
-  document.body.prepend(errorContainer);
+document.addEventListener('DOMContentLoaded', () => {
+  const carta = document.getElementById('carta');
+  const musica = document.getElementById('musica');
   
-  try {
-    // 1. Cargar datos
-    const ubicaciones = await cargarDatosDesdeSheets();
+  carta.addEventListener('click', () => {
+    // Cambiar imagen de la carta
+    carta.src = 'https://cdn-icons-png.flaticon.com/512/1925/1925282.png';
     
-    // 2. Ordenar por fecha
-    ubicaciones.sort((a, b) => {
-      try {
-        return new Date(a.fecha) - new Date(b.fecha);
-      } catch {
-        return 0;
-      }
-    });
+    // Reproducir música
+    musica.play().catch(e => console.log("Auto-play bloqueado:", e));
     
-    // 3. Inicializar componentes
-    initMap(ubicaciones);
-    initTimeline(ubicaciones);
+    // Efecto de vibración
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
     
-    // 4. Inicializar Fullpage.js si existe
-    if (typeof fullpage !== 'undefined') {
-      try {
-        new fullpage('#fullpage', {
-          licenseKey: 'OPEN-SOURCE-GPLV3-LICENSE',
-          afterRender: () => {
-            setTimeout(() => {
-              if (mapa) mapa.invalidateSize();
-            }, 500);
-          },
-          onLeave: (origin, destination) => {
-            if (destination.index === 1 && mapa) {
-              setTimeout(() => mapa.invalidateSize(), 300);
-            }
-          }
-        });
-      } catch (error) {
-        console.error("Error inicializando Fullpage.js:", error);
-      }
-    }
+    // Ocultar intro
+    document.getElementById('intro').style.opacity = '0';
     
-    // 5. Mostrar mensaje si no hay datos
-    if (ubicaciones.length === 0) {
-      showError("No se pudieron cargar los datos. Por favor verifica tu conexión.");
-    }
-    
-  } catch (error) {
-    console.error("Error crítico en la aplicación:", error);
-    showError(`Error crítico: ${error.message}`);
-  }
-  
-  function showError(message) {
-    console.error(message);
-    errorContainer.textContent = message;
-    errorContainer.style.display = 'block';
-    
-    // Ocultar después de 10 segundos
     setTimeout(() => {
-      errorContainer.style.display = 'none';
-    }, 10000);
-  }
+      document.getElementById('intro').style.display = 'none';
+      const main = document.getElementById('main');
+      
+      // Mostrar contenido principal
+      main.style.display = 'block';
+      setTimeout(() => {
+        main.style.opacity = '1';
+        
+        // Inicializar componentes
+        initFullpage();
+        initGallery();
+        initMap();
+      }, 50);
+    }, 300);
+  });
 });
