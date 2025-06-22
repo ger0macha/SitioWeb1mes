@@ -185,6 +185,17 @@ h1, h2, h3 {
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
+.marcador-multi {
+  animation: latido 1.5s infinite;
+  font-size: 22px;
+}
+
+@keyframes latido {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
 /* Responsive Design - Versión Mejorada */
 @media (max-width: 768px) {
   /* Ajustes generales para tablet */
