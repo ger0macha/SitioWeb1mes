@@ -21,31 +21,35 @@ async function cargarDatosDesdeSheets() {
     
     const data = await response.json();
     
-    // Procesamiento especial para el formato de tu sheet
+    // Procesamiento y ordenar por fecha
     return data.map(item => {
-      // Construye el array de coordenadas desde las columnas separadas
       const coordenadas = [];
       if (item['coordenadas/0'] && item['coordenadas/1']) {
         coordenadas.push(Number(item['coordenadas/0']));
         coordenadas.push(Number(item['coordenadas/1']));
       }
       
+      // Convertir fecha a objeto Date para poder ordenar
+      const fechaObj = item.fecha ? new Date(item.fecha) : new Date();
+      
       return {
         titulo: item.titulo || 'Sin título',
         fecha: item.fecha || '',
+        fechaObj: fechaObj, // Guardamos el objeto Date para ordenar
         descripcion: item.descripcion || '',
         icono: item.icono || '❤️',
         foto: item.foto || '',
         coordenadas: coordenadas
       };
-    }).filter(item => item.coordenadas.length === 2); // Solo items con coordenadas válidas
+    })
+    .filter(item => item.coordenadas.length === 2)
+    .sort((a, b) => a.fechaObj - b.fechaObj); // Ordenar por fecha
     
   } catch (error) {
     console.error("Error cargando datos:", error);
     return [];
   }
 }
-
 // =============================================
 // INICIALIZACIÓN DE COMPONENTES
 // =============================================
@@ -110,6 +114,33 @@ async function initMap() {
   }, 500);
 }
 
+// Linea de tiempo
+
+function crearLineaDeTiempo(ubicaciones) {
+  const contenedor = document.createElement('div');
+  contenedor.className = 'timeline-container';
+  
+  ubicaciones.forEach((ubicacion, index) => {
+    const evento = document.createElement('div');
+    evento.className = `timeline-event ${index % 2 === 0 ? 'left' : 'right'}`;
+    
+    evento.innerHTML = `
+      <div class="timeline-content">
+        <div class="timeline-icon">${ubicacion.icono}</div>
+        <h4>${ubicacion.titulo}</h4>
+        <small>${ubicacion.fecha}</small>
+        <p>${ubicacion.descripcion}</p>
+        ${ubicacion.foto ? `<img src="${ubicacion.foto}" class="timeline-img">` : ''}
+        <button class="timeline-map-btn" data-index="${index}">Ver en mapa</button>
+      </div>
+    `;
+    
+    contenedor.appendChild(evento);
+  });
+  
+  return contenedor;
+}
+
 function initGallery() {
   lightGallery(document.getElementById('galeria-container'), {
     plugins: [lgZoom],
@@ -143,32 +174,55 @@ document.addEventListener('DOMContentLoaded', () => {
   const carta = document.getElementById('carta');
   const musica = document.getElementById('musica');
   
-  carta.addEventListener('click', () => {
-    // Cambiar imagen de la carta
+  carta.addEventListener('click', async () => {
     carta.src = 'https://cdn-icons-png.flaticon.com/512/1925/1925282.png';
-    
-    // Reproducir música
     musica.play().catch(e => console.log("Auto-play bloqueado:", e));
     
-    // Efecto de vibración
     if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
     
-    // Ocultar intro
     document.getElementById('intro').style.opacity = '0';
     
-    setTimeout(() => {
+    setTimeout(async () => {
       document.getElementById('intro').style.display = 'none';
       const main = document.getElementById('main');
       
-      // Mostrar contenido principal
       main.style.display = 'block';
-      setTimeout(() => {
+      setTimeout(async () => {
         main.style.opacity = '1';
+        
+        // Cargar datos primero
+        const ubicaciones = await cargarDatosDesdeSheets();
         
         // Inicializar componentes
         initFullpage();
         initGallery();
-        initMap();
+        initMap(ubicaciones);
+        
+        // Crear y añadir línea de tiempo
+        const timeline = crearLineaDeTiempo(ubicaciones);
+        document.getElementById('linea-tiempo-container').appendChild(timeline);
+        
+        // Añadir event listeners para los botones
+        document.querySelectorAll('.timeline-map-btn').forEach(btn => {
+          btn.addEventListener('click', function() {
+            const index = parseInt(this.getAttribute('data-index'));
+            const ubicacion = ubicaciones[index];
+            
+            // Mover el mapa a esa ubicación
+            mapa.setView(ubicacion.coordenadas, 15);
+            
+            // Abrir el popup
+            setTimeout(() => {
+              const marker = Object.values(mapa._layers)
+                .find(layer => layer instanceof L.Marker && 
+                      layer.getLatLng().equals(ubicacion.coordenadas));
+              if (marker) marker.openPopup();
+            }, 500);
+            
+            // Cambiar a la sección del mapa
+            fullpageInstance.moveTo('lugares');
+          });
+        });
       }, 50);
     }, 300);
   });

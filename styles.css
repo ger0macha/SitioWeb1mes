@@ -230,6 +230,116 @@ h1, h2, h3 {
   padding: 20px;
 }
 
+/* Estilos para la línea de tiempo */
+.timeline-container {
+  position: relative;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 0;
+}
+
+.timeline-container::before {
+  content: '';
+  position: absolute;
+  width: 4px;
+  background: var(--color-primary);
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  margin-left: -2px;
+}
+
+.timeline-event {
+  padding: 10px 40px;
+  position: relative;
+  width: 50%;
+  box-sizing: border-box;
+}
+
+.timeline-event.left {
+  left: 0;
+}
+
+.timeline-event.right {
+  left: 50%;
+}
+
+.timeline-content {
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-sm);
+  position: relative;
+}
+
+.timeline-icon {
+  background: var(--color-secondary);
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 20px;
+  font-size: 18px;
+}
+
+.timeline-event.left .timeline-icon {
+  right: -60px;
+}
+
+.timeline-event.right .timeline-icon {
+  left: -60px;
+}
+
+.timeline-img {
+  width: 100%;
+  border-radius: var(--border-radius-sm);
+  margin-top: 10px;
+  max-height: 150px;
+  object-fit: cover;
+}
+
+.timeline-map-btn {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  margin-top: 10px;
+  transition: var(--transition);
+}
+
+.timeline-map-btn:hover {
+  background: var(--color-secondary);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .timeline-container::before {
+    left: 31px;
+  }
+  
+  .timeline-event {
+    width: 100%;
+    padding-left: 70px;
+    padding-right: 25px;
+  }
+  
+  .timeline-event.right {
+    left: 0;
+  }
+  
+  .timeline-event.left .timeline-icon,
+  .timeline-event.right .timeline-icon {
+    left: 15px;
+    right: auto;
+  }
+}
+
 @keyframes latido {
   0% { transform: scale(1); }
   50% { transform: scale(1.3); }
