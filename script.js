@@ -21,35 +21,35 @@ async function cargarDatosDesdeSheets() {
     
     const data = await response.json();
     
-    // Procesamiento y ordenar por fecha
-    return data.map(item => {
-      const coordenadas = [];
-      if (item['coordenadas/0'] && item['coordenadas/1']) {
-        coordenadas.push(Number(item['coordenadas/0']));
-        coordenadas.push(Number(item['coordenadas/1']));
-      }
-      
-      // Convertir fecha a objeto Date para poder ordenar
-      const fechaObj = item.fecha ? new Date(item.fecha) : new Date();
-      
-      return {
-        titulo: item.titulo || 'Sin título',
-        fecha: item.fecha || '',
-        fechaObj: fechaObj, // Guardamos el objeto Date para ordenar
-        descripcion: item.descripcion || '',
-        icono: item.icono || '❤️',
-        foto: item.foto || '',
-        coordenadas: coordenadas
-      };
-    })
-    .filter(item => item.coordenadas.length === 2)
-    .sort((a, b) => a.fechaObj - b.fechaObj); // Ordenar por fecha
+    // Procesar y validar datos
+    return data
+      .map(item => {
+        const coordenadas = [];
+        if (item['coordenadas/0'] && item['coordenadas/1']) {
+          coordenadas.push(Number(item['coordenadas/0']));
+          coordenadas.push(Number(item['coordenadas/1']));
+        }
+        
+        return {
+          titulo: item.titulo || 'Sin título',
+          fecha: item.fecha || '',
+          fechaObj: item.fecha ? new Date(item.fecha) : new Date(),
+          descripcion: item.descripcion || '',
+          icono: item.icono || '❤️',
+          foto: item.foto || '',
+          coordenadas: coordenadas
+        };
+      })
+      .filter(item => item.coordenadas.length === 2) // Solo items con coordenadas válidas
+      .sort((a, b) => a.fechaObj - b.fechaObj); // Ordenar cronológicamente
     
   } catch (error) {
     console.error("Error cargando datos:", error);
+    mostrarError("Error cargando datos desde Google Sheets");
     return [];
   }
 }
+
 // =============================================
 // INICIALIZACIÓN DE COMPONENTES
 // =============================================
@@ -130,8 +130,14 @@ function crearLineaDeTiempo(ubicaciones) {
         <h4>${ubicacion.titulo}</h4>
         <small>${ubicacion.fecha}</small>
         <p>${ubicacion.descripcion}</p>
-        ${ubicacion.foto ? `<img src="${ubicacion.foto}" class="timeline-img">` : ''}
-        <button class="timeline-map-btn" data-index="${index}">Ver en mapa</button>
+        ${ubicacion.foto ? `
+          <img src="${ubicacion.foto}" 
+               class="timeline-img" 
+               alt="${ubicacion.titulo}"
+               loading="lazy">` : ''}
+        <button class="timeline-map-btn" data-index="${index}">
+          Ver en mapa
+        </button>
       </div>
     `;
     
@@ -157,73 +163,208 @@ function initFullpage() {
     autoScrolling: true,
     scrollBar: false,
     navigation: true,
-    anchors: ['primer-seccion', 'lugares', 'memorias'],
+    anchors: ['mensaje', 'contador', 'linea-tiempo', 'mapa', 'galeria'],
     scrollingSpeed: 800,
     afterLoad: function(origin, destination) {
-      if (destination.anchor === 'lugares' && mapa) {
+      if (destination.anchor === 'mapa' && mapa) {
         setTimeout(() => mapa.invalidateSize(), 300);
       }
     }
   });
 }
 
+function crearGaleria(ubicaciones) {
+  const galeriaContainer = document.getElementById('galeria-container');
+  galeriaContainer.innerHTML = '';
+  
+  ubicaciones.filter(ubicacion => ubicacion.foto).forEach(ubicacion => {
+    const link = document.createElement('a');
+    link.href = ubicacion.foto;
+    link.classList.add('gallery-item');
+    link.dataset.subHtml = `<h4>${ubicacion.titulo}</h4><p>${ubicacion.descripcion}</p>`;
+    
+    const img = document.createElement('img');
+    img.src = ubicacion.foto;
+    img.alt = ubicacion.descripcion;
+    img.loading = 'lazy';
+    
+    link.appendChild(img);
+    galeriaContainer.appendChild(link);
+  });
+}
+
+async function cargarDatosYComponentes() {
+  try {
+    // 1. Cargar datos desde Google Sheets
+    const ubicaciones = await cargarDatosDesdeSheets();
+    
+    // 2. Inicializar componentes principales
+    initFullpage();
+    initMap(ubicaciones);
+    
+    // 3. Crear e inicializar galería
+    crearGaleria(ubicaciones);
+    initGallery();
+    
+    // 4. Crear línea de tiempo
+    const timeline = crearLineaDeTiempo(ubicaciones);
+    document.getElementById('linea-tiempo-container').innerHTML = '';
+    document.getElementById('linea-tiempo-container').appendChild(timeline);
+    
+    // 5. Configurar eventos de la línea de tiempo
+    configurarBotonesTimeline(ubicaciones);
+    
+    return ubicaciones;
+  } catch (error) {
+    console.error("Error inicializando componentes:", error);
+    mostrarError("¡Ups! Hubo un problema cargando los datos");
+    return [];
+  }
+}
+
+function actualizarContador(fechaInicio) {
+  const ahora = new Date();
+  
+  // 1. Validar fechas
+  if (fechaInicio > ahora) {
+    console.error("La fecha de inicio es futura");
+    return;
+  }
+
+  // 2. Calcular meses completos
+  let meses = (ahora.getFullYear() - fechaInicio.getFullYear()) * 12;
+  meses += ahora.getMonth() - fechaInicio.getMonth();
+  
+  // Ajustar si el día actual es menor que el día de inicio
+  if (ahora.getDate() < fechaInicio.getDate()) {
+    meses--;
+  }
+
+  // 3. Calcular días restantes
+  const fechaBase = new Date(fechaInicio);
+  fechaBase.setMonth(fechaBase.getMonth() + meses);
+  
+  let dias = Math.floor((ahora - fechaBase) / (1000 * 60 * 60 * 24));
+  
+  // Ajuste de borde: cuando la diferencia es exactamente 1 mes
+  if (dias < 0) {
+    meses--;
+    fechaBase.setMonth(fechaBase.getMonth() - 1);
+    dias = Math.floor((ahora - fechaBase) / (1000 * 60 * 60 * 24));
+  }
+
+  // 4. Calcular horas del día actual
+  const inicioDia = new Date(ahora);
+  inicioDia.setHours(0, 0, 0, 0);
+  
+  const horas = Math.floor((ahora - inicioDia) / (1000 * 60 * 60));
+
+  // 5. Actualizar DOM
+  document.getElementById('meses').textContent = meses;
+  document.getElementById('dias').textContent = dias;
+  document.getElementById('horas').textContent = horas;
+  
+  // 6. Devolver datos para depuración
+  return { meses, dias, horas };
+}
+
+
+
 // =============================================
 // MECANISMO DE CARTA (RESTAURADO)
 // =============================================
 document.addEventListener('DOMContentLoaded', () => {
+  // Elementos DOM
   const carta = document.getElementById('carta');
   const musica = document.getElementById('musica');
+  const intro = document.getElementById('intro');
+  const main = document.getElementById('main');
   
+  // Variables de estado
+  let cartaAbierta = false;
+  const FECHA_INICIO = new Date('2025-05-14'); // FECHA REAL AQUÍ
+  
+  // Evento principal
   carta.addEventListener('click', async () => {
+    if (cartaAbierta) return;
+    cartaAbierta = true;
+    
+    // Animación inicial
     carta.src = 'https://cdn-icons-png.flaticon.com/512/1925/1925282.png';
     musica.play().catch(e => console.log("Auto-play bloqueado:", e));
-    
     if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
     
-    document.getElementById('intro').style.opacity = '0';
+    // Transición de pantallas
+    intro.style.opacity = '0';
     
     setTimeout(async () => {
-      document.getElementById('intro').style.display = 'none';
-      const main = document.getElementById('main');
-      
+      intro.style.display = 'none';
       main.style.display = 'block';
+      
       setTimeout(async () => {
         main.style.opacity = '1';
         
-        // Cargar datos primero
-        const ubicaciones = await cargarDatosDesdeSheets();
-        
         // Inicializar componentes
-        initFullpage();
-        initGallery();
-        initMap(ubicaciones);
+        await cargarDatosYComponentes();
         
-        // Crear y añadir línea de tiempo
-        const timeline = crearLineaDeTiempo(ubicaciones);
-        document.getElementById('linea-tiempo-container').appendChild(timeline);
-        
-        // Añadir event listeners para los botones
-        document.querySelectorAll('.timeline-map-btn').forEach(btn => {
-          btn.addEventListener('click', function() {
-            const index = parseInt(this.getAttribute('data-index'));
-            const ubicacion = ubicaciones[index];
-            
-            // Mover el mapa a esa ubicación
-            mapa.setView(ubicacion.coordenadas, 15);
-            
-            // Abrir el popup
-            setTimeout(() => {
-              const marker = Object.values(mapa._layers)
-                .find(layer => layer instanceof L.Marker && 
-                      layer.getLatLng().equals(ubicacion.coordenadas));
-              if (marker) marker.openPopup();
-            }, 500);
-            
-            // Cambiar a la sección del mapa
-            fullpageInstance.moveTo('lugares');
-          });
-        });
       }, 50);
     }, 300);
   });
+
+  // Función para inicializar todos los componentes
+  async function inicializarComponentes() {
+    try {
+      // Contador de tiempo
+      const FECHA_INICIO = new Date('2025-05-14');
+      actualizarContador(FECHA_INICIO);
+      
+      setInterval(() => actualizarContador(FECHA_INICIO), 3600000); // Actualizar cada hora
+      
+      // Cargar datos y componentes
+      const ubicaciones = await cargarDatosDesdeSheets();
+      
+      initFullpage();
+      initMap(ubicaciones);
+      initGallery();
+      
+      // Línea de tiempo
+      const timeline = crearLineaDeTiempo(ubicaciones);
+      document.getElementById('linea-tiempo-container').appendChild(timeline);
+      
+      // Eventos de la línea de tiempo
+      configurarBotonesTimeline(ubicaciones);
+      
+    } catch (error) {
+      console.error("Error inicializando componentes:", error);
+      mostrarError("Ocurrió un error al cargar los datos");
+    }
+  }
+
+  // Función para configurar botones de timeline
+  function configurarBotonesTimeline(ubicaciones) {
+    document.querySelectorAll('.timeline-map-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const index = parseInt(this.getAttribute('data-index'));
+        const ubicacion = ubicaciones[index];
+        
+        mapa.setView(ubicacion.coordenadas, 15);
+        setTimeout(() => {
+          const marker = Object.values(mapa._layers)
+            .find(layer => layer instanceof L.Marker && 
+                  layer.getLatLng().equals(ubicacion.coordenadas));
+          if (marker) marker.openPopup();
+        }, 500);
+        
+        fullpageInstance.moveTo('mapa');
+      });
+    });
+  }
+
+  // Función para mostrar errores
+  function mostrarError(mensaje) {
+    const errorEl = document.getElementById('error-message');
+    errorEl.textContent = mensaje;
+    errorEl.style.display = 'block';
+    setTimeout(() => errorEl.style.display = 'none', 5000);
+  }
 });
