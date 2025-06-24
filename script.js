@@ -8,9 +8,20 @@ const SHEET_NAME = "ubi";
 // VARIABLES GLOBALES
 // =============================================
 let mapa, fullpageInstance;
+let ubicacionesGlobales = [];
 
 // =============================================
-// FUNCIÓN PARA CARGAR DATOS DESDE SHEETS (CORREGIDA)
+// FUNCIONES AUXILIARES
+// =============================================
+function mostrarError(mensaje) {
+  const errorEl = document.getElementById('error-message');
+  errorEl.textContent = mensaje;
+  errorEl.style.display = 'block';
+  setTimeout(() => errorEl.style.display = 'none', 5000);
+}
+
+// =============================================
+// FUNCIÓN PARA CARGAR DATOS DESDE SHEETS
 // =============================================
 async function cargarDatosDesdeSheets() {
   try {
@@ -21,7 +32,6 @@ async function cargarDatosDesdeSheets() {
     
     const data = await response.json();
     
-    // Procesar y validar datos
     return data
       .map(item => {
         const coordenadas = [];
@@ -40,8 +50,8 @@ async function cargarDatosDesdeSheets() {
           coordenadas: coordenadas
         };
       })
-      .filter(item => item.coordenadas.length === 2) // Solo items con coordenadas válidas
-      .sort((a, b) => a.fechaObj - b.fechaObj); // Ordenar cronológicamente
+      .filter(item => item.coordenadas.length === 2)
+      .sort((a, b) => a.fechaObj - b.fechaObj);
     
   } catch (error) {
     console.error("Error cargando datos:", error);
@@ -51,30 +61,34 @@ async function cargarDatosDesdeSheets() {
 }
 
 // =============================================
-// INICIALIZACIÓN DE COMPONENTES
+// MAPA - VERSIÓN OPTIMIZADA
 // =============================================
-// Reemplaza completamente la función initMap() por esta versión mejorada:
 async function initMap() {
-  const ubicaciones = await cargarDatosDesdeSheets();
   const container = document.getElementById('mapa-container');
   
-  if (!ubicaciones.length) {
+  if (!ubicacionesGlobales.length) {
     container.innerHTML = '<p class="error-mapa">No hay ubicaciones para mostrar</p>';
     return;
   }
 
-  // Limpiar y preparar contenedor
   container.innerHTML = '<div id="map" style="height: 100%; width: 100%;"></div>';
 
-  // Crear mapa centrado en la primera ubicación
-  mapa = L.map('map').setView(ubicaciones[0].coordenadas, 13);
+  // Usar la primera ubicación como centro del mapa
+  const centroMapa = ubicacionesGlobales[0].coordenadas;
+  mapa = L.map('map').setView(centroMapa, 13);
   
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap'
   }).addTo(mapa);
 
-  // Agregar marcadores con iconos personalizados
-  ubicaciones.forEach((ubicacion, index) => {
+  // Agrupar marcadores para mejor rendimiento
+  const markers = L.markerClusterGroup({
+    spiderfyOnMaxZoom: true,
+    showCoverageOnHover: false,
+    zoomToBoundsOnClick: true
+  });
+
+  ubicacionesGlobales.forEach((ubicacion, index) => {
     const marker = L.marker(ubicacion.coordenadas, {
       icon: L.divIcon({
         html: `<div style="
@@ -98,29 +112,26 @@ async function initMap() {
         <small>${ubicacion.fecha}</small>
         ${ubicacion.foto ? `
         <a href="${ubicacion.foto}" class="gallery-item" data-sub-html="<h4>${ubicacion.titulo}</h4><p>${ubicacion.descripcion}</p>">
-         <img src="${ubicacion.foto}" class="popup-thumb">
+         <img src="${ubicacion.foto}" class="popup-thumb" loading="lazy">
         </a>` : ''}
       </div>
     `);
     
-    marker.addTo(mapa);
+    markers.addLayer(marker);
   });
 
-  // Ajustar el zoom para mostrar todos los marcadores
-  setTimeout(() => {
-    mapa.invalidateSize();
-    const markerGroup = new L.featureGroup(ubicaciones.map(u => L.marker(u.coordenadas)));
-    mapa.fitBounds(markerGroup.getBounds().pad(0.2));
-  }, 500);
+  mapa.addLayer(markers);
+  mapa.fitBounds(markers.getBounds().pad(0.2));
 }
 
-// Linea de tiempo
-
-function crearLineaDeTiempo(ubicaciones) {
+// =============================================
+// LÍNEA DE TIEMPO - VERSIÓN MEJORADA
+// =============================================
+function crearLineaDeTiempo() {
   const contenedor = document.createElement('div');
   contenedor.className = 'timeline-container';
   
-  ubicaciones.forEach((ubicacion, index) => {
+  ubicacionesGlobales.forEach((ubicacion, index) => {
     const evento = document.createElement('div');
     evento.className = `timeline-event ${index % 2 === 0 ? 'left' : 'right'}`;
     
@@ -147,37 +158,14 @@ function crearLineaDeTiempo(ubicaciones) {
   return contenedor;
 }
 
-function initGallery() {
-  lightGallery(document.getElementById('galeria-container'), {
-    plugins: [lgZoom],
-    speed: 500,
-    download: false
-  });
-}
-
-function initFullpage() {
-  if (fullpageInstance) fullpage.destroy('all');
-  
-  fullpageInstance = new fullpage('#fullpage', {
-    licenseKey: 'OPEN-SOURCE-GPLV3-LICENSE',
-    autoScrolling: true,
-    scrollBar: false,
-    navigation: true,
-    anchors: ['mensaje', 'contador', 'linea-tiempo', 'mapa', 'galeria'],
-    scrollingSpeed: 800,
-    afterLoad: function(origin, destination) {
-      if (destination.anchor === 'mapa' && mapa) {
-        setTimeout(() => mapa.invalidateSize(), 300);
-      }
-    }
-  });
-}
-
-function crearGaleria(ubicaciones) {
+// =============================================
+// GALERÍA - VERSIÓN OPTIMIZADA
+// =============================================
+function crearGaleria() {
   const galeriaContainer = document.getElementById('galeria-container');
   galeriaContainer.innerHTML = '';
   
-  ubicaciones.filter(ubicacion => ubicacion.foto).forEach(ubicacion => {
+  ubicacionesGlobales.filter(ubicacion => ubicacion.foto).forEach(ubicacion => {
     const link = document.createElement('a');
     link.href = ubicacion.foto;
     link.classList.add('gallery-item');
@@ -193,178 +181,171 @@ function crearGaleria(ubicaciones) {
   });
 }
 
-async function cargarDatosYComponentes() {
-  try {
-    // 1. Cargar datos desde Google Sheets
-    const ubicaciones = await cargarDatosDesdeSheets();
-    
-    // 2. Inicializar componentes principales
-    initFullpage();
-    initMap(ubicaciones);
-    
-    // 3. Crear e inicializar galería
-    crearGaleria(ubicaciones);
-    initGallery();
-    
-    // 4. Crear línea de tiempo
-    const timeline = crearLineaDeTiempo(ubicaciones);
-    document.getElementById('linea-tiempo-container').innerHTML = '';
-    document.getElementById('linea-tiempo-container').appendChild(timeline);
-    
-    // 5. Configurar eventos de la línea de tiempo
-    configurarBotonesTimeline(ubicaciones);
-    
-    return ubicaciones;
-  } catch (error) {
-    console.error("Error inicializando componentes:", error);
-    mostrarError("¡Ups! Hubo un problema cargando los datos");
-    return [];
-  }
+function initGallery() {
+  lightGallery(document.getElementById('galeria-container'), {
+    plugins: [lgZoom],
+    speed: 500,
+    download: false
+  });
 }
 
+// =============================================
+// FULLPAGE - CONFIGURACIÓN
+// =============================================
+function initFullpage() {
+  if (fullpageInstance) fullpage.destroy('all');
+  
+  fullpageInstance = new fullpage('#fullpage', {
+    licenseKey: 'OPEN-SOURCE-GPLV3-LICENSE',
+    autoScrolling: true,
+    scrollBar: false,
+    navigation: true,
+    anchors: ['mensaje', 'contador', 'linea-tiempo', 'lugares', 'memorias'],
+    scrollingSpeed: 800,
+    afterLoad: function(origin, destination) {
+      if (destination.anchor === 'lugares' && mapa) {
+        setTimeout(() => mapa.invalidateSize(), 300);
+      }
+    }
+  });
+}
+
+// =============================================
+// CONTADOR DE TIEMPO - VERSIÓN PRECISA
+// =============================================
 function actualizarContador(fechaInicio) {
   const ahora = new Date();
   
-  // 1. Validar fechas
   if (fechaInicio > ahora) {
     console.error("La fecha de inicio es futura");
     return;
   }
 
-  // 2. Calcular meses completos
+  // Calcular meses completos
   let meses = (ahora.getFullYear() - fechaInicio.getFullYear()) * 12;
   meses += ahora.getMonth() - fechaInicio.getMonth();
   
-  // Ajustar si el día actual es menor que el día de inicio
+  // Ajuste para días incompletos
   if (ahora.getDate() < fechaInicio.getDate()) {
     meses--;
   }
 
-  // 3. Calcular días restantes
+  // Calcular días restantes
   const fechaBase = new Date(fechaInicio);
   fechaBase.setMonth(fechaBase.getMonth() + meses);
   
   let dias = Math.floor((ahora - fechaBase) / (1000 * 60 * 60 * 24));
   
-  // Ajuste de borde: cuando la diferencia es exactamente 1 mes
+  // Ajuste de casos especiales
   if (dias < 0) {
     meses--;
     fechaBase.setMonth(fechaBase.getMonth() - 1);
     dias = Math.floor((ahora - fechaBase) / (1000 * 60 * 60 * 24));
   }
 
-  // 4. Calcular horas del día actual
+  // Calcular horas del día actual
   const inicioDia = new Date(ahora);
   inicioDia.setHours(0, 0, 0, 0);
   
   const horas = Math.floor((ahora - inicioDia) / (1000 * 60 * 60));
 
-  // 5. Actualizar DOM
+  // Actualizar DOM
   document.getElementById('meses').textContent = meses;
   document.getElementById('dias').textContent = dias;
   document.getElementById('horas').textContent = horas;
-  
-  // 6. Devolver datos para depuración
-  return { meses, dias, horas };
 }
 
-
+// =============================================
+// CONFIGURACIÓN DE EVENTOS
+// =============================================
+function configurarBotonesTimeline() {
+  document.querySelectorAll('.timeline-map-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const index = parseInt(this.getAttribute('data-index'));
+      const ubicacion = ubicacionesGlobales[index];
+      
+      mapa.setView(ubicacion.coordenadas, 15);
+      setTimeout(() => {
+        const marker = Object.values(mapa._layers)
+          .find(layer => layer instanceof L.Marker && 
+                layer.getLatLng().equals(ubicacion.coordenadas));
+        if (marker) marker.openPopup();
+      }, 500);
+      
+      fullpageInstance.moveTo('lugares');
+    });
+  });
+}
 
 // =============================================
-// MECANISMO DE CARTA (RESTAURADO)
+// CARGA PRINCIPAL DE DATOS Y COMPONENTES
+// =============================================
+async function cargarDatosYComponentes() {
+  try {
+    ubicacionesGlobales = await cargarDatosDesdeSheets();
+    
+    initFullpage();
+    initMap();
+    
+    crearGaleria();
+    initGallery();
+    
+    const timeline = crearLineaDeTiempo();
+    document.getElementById('linea-tiempo-container').innerHTML = '';
+    document.getElementById('linea-tiempo-container').appendChild(timeline);
+    
+    configurarBotonesTimeline();
+    
+  } catch (error) {
+    console.error("Error inicializando componentes:", error);
+    mostrarError("¡Ups! Hubo un problema cargando los datos");
+  }
+}
+
+// =============================================
+// EVENTO DE CARTA - VERSIÓN OPTIMIZADA
 // =============================================
 document.addEventListener('DOMContentLoaded', () => {
-  // Elementos DOM
   const carta = document.getElementById('carta');
   const musica = document.getElementById('musica');
   const intro = document.getElementById('intro');
   const main = document.getElementById('main');
   
-  // Variables de estado
   let cartaAbierta = false;
-  const FECHA_INICIO = new Date('2025-05-14'); // FECHA REAL AQUÍ
+  const FECHA_INICIO = new Date('2025-05-14');
   
-  // Evento principal
   carta.addEventListener('click', async () => {
     if (cartaAbierta) return;
     cartaAbierta = true;
     
-    // Animación inicial
     carta.src = 'https://cdn-icons-png.flaticon.com/512/1925/1925282.png';
-    musica.play().catch(e => console.log("Auto-play bloqueado:", e));
+    
+    // Reproducir música con manejo de errores
+    try {
+      musica.play();
+    } catch (e) {
+      console.log("Auto-play bloqueado:", e);
+    }
+    
     if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
     
-    // Transición de pantallas
     intro.style.opacity = '0';
     
-    setTimeout(async () => {
+    setTimeout(() => {
       intro.style.display = 'none';
       main.style.display = 'block';
       
       setTimeout(async () => {
         main.style.opacity = '1';
         
-        // Inicializar componentes
+        // Iniciar contador
+        actualizarContador(FECHA_INICIO);
+        setInterval(() => actualizarContador(FECHA_INICIO), 3600000);
+        
+        // Cargar datos y componentes
         await cargarDatosYComponentes();
         
       }, 50);
     }, 300);
   });
-
-  // Función para inicializar todos los componentes
-  async function inicializarComponentes() {
-    try {
-      // Contador de tiempo
-      const FECHA_INICIO = new Date('2025-05-14');
-      actualizarContador(FECHA_INICIO);
-      
-      setInterval(() => actualizarContador(FECHA_INICIO), 3600000); // Actualizar cada hora
-      
-      // Cargar datos y componentes
-      const ubicaciones = await cargarDatosDesdeSheets();
-      
-      initFullpage();
-      initMap(ubicaciones);
-      initGallery();
-      
-      // Línea de tiempo
-      const timeline = crearLineaDeTiempo(ubicaciones);
-      document.getElementById('linea-tiempo-container').appendChild(timeline);
-      
-      // Eventos de la línea de tiempo
-      configurarBotonesTimeline(ubicaciones);
-      
-    } catch (error) {
-      console.error("Error inicializando componentes:", error);
-      mostrarError("Ocurrió un error al cargar los datos");
-    }
-  }
-
-  // Función para configurar botones de timeline
-  function configurarBotonesTimeline(ubicaciones) {
-    document.querySelectorAll('.timeline-map-btn').forEach(btn => {
-      btn.addEventListener('click', function() {
-        const index = parseInt(this.getAttribute('data-index'));
-        const ubicacion = ubicaciones[index];
-        
-        mapa.setView(ubicacion.coordenadas, 15);
-        setTimeout(() => {
-          const marker = Object.values(mapa._layers)
-            .find(layer => layer instanceof L.Marker && 
-                  layer.getLatLng().equals(ubicacion.coordenadas));
-          if (marker) marker.openPopup();
-        }, 500);
-        
-        fullpageInstance.moveTo('mapa');
-      });
-    });
-  }
-
-  // Función para mostrar errores
-  function mostrarError(mensaje) {
-    const errorEl = document.getElementById('error-message');
-    errorEl.textContent = mensaje;
-    errorEl.style.display = 'block';
-    setTimeout(() => errorEl.style.display = 'none', 5000);
-  }
 });

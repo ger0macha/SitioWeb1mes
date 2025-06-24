@@ -4,39 +4,32 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Para Vos 💌</title>
-  <link rel="stylesheet" href="styles.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Helvetica+Neue:wght@300;400;500;700&display=swap" rel="stylesheet">
   
-  <!-- FullPage.js -->
+  <!-- Librerías externas -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullpage.js@4.0.20/dist/fullpage.min.css" />
-  
-  <!-- Leaflet -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  
-  <!-- LightGallery -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery@2.7.1/css/lightgallery-bundle.min.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
+  
+  <!-- Nuestros estilos -->
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-
-  <audio id="musica" src="assets/romeoyjulieta.mp3" loop></audio>
+  <audio id="musica" src="assets/romeoyjulieta.ogg" loop></audio>
 
   <div id="intro">
     <img id="carta" src="https://cdn-icons-png.flaticon.com/512/1925/1925306.png" alt="Carta cerrada" />
     <p>Tocá la carta para abrir</p>
   </div>
 
-  <div id="main" style="display:none;">
+  <div id="main">
     <div class="mensaje">
       <h1>¡Feliz primer mes, amor!</h1>
       <p>Este es un pequeño regalo digital para vos 💚</p>
     </div>
 
     <div id="fullpage">
-      <!-- Sección 1: Mensaje especial -->
       <div class="section" data-anchor="mensaje">
         <div class="section-content">
           <div class="mensaje-especial">
@@ -46,7 +39,6 @@
         </div>
       </div>
 
-      <!-- Sección 2: Contador -->
       <div class="section" data-anchor="contador">
         <div class="section-content">
           <div class="contador-tiempo">
@@ -69,7 +61,6 @@
         </div>
       </div>
 
-      <!-- Sección 3: Línea de tiempo -->
       <div class="section" data-anchor="linea-tiempo">
         <div class="section-content">
           <h2>Nuestra Historia</h2>
@@ -77,7 +68,6 @@
         </div>
       </div>
 
-      <!-- Sección 4: Mapa -->
       <div class="section" data-anchor="lugares">
         <div class="section-content">
           <h2>Nuestros lugares 🗺️</h2>
@@ -85,7 +75,6 @@
         </div>
       </div>
 
-      <!-- Sección 5: Galería -->
       <div class="section" data-anchor="memorias">
         <div class="section-content">
           <h2>Recuerdos 📸</h2>
@@ -95,14 +84,16 @@
     </div>
   </div>
 
-  <!-- Mensaje de error -->
-  <div id="error-message" style="display:none; position:fixed; top:0; left:0; width:100%; background:#ff6b6b; color:white; padding:15px; text-align:center; z-index:10000;"></div>
+  <div id="error-message"></div>
 
+  <!-- Librerías JavaScript -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/fullpage.js@4.0.20/dist/fullpage.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/lightgallery@2.7.1/lightgallery.umd.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/lightgallery@2.7.1/plugins/zoom/lg-zoom.umd.js"></script>
+  
+  <!-- Nuestro script principal -->
   <script src="script.js"></script>
 </body>
 </html>

@@ -12,7 +12,6 @@
   --border-radius-lg: 15px;
 }
 
-/* Reset y estilos base */
 html, body {
   margin: 0;
   padding: 0;
@@ -21,7 +20,6 @@ html, body {
   background: #e8f5e9;
 }
 
-/* Fondo con imagen y overlay */
 body {
   background: url('https://images.unsplash.com/photo-1686298804691-c7df01a856ef?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D') no-repeat center center fixed;
   background-size: cover;
@@ -31,13 +29,15 @@ body {
 body::before {
   content: '';
   position: fixed;
-  inset: 0; /* Nueva sintaxis equivalente a top/right/bottom/left: 0 */
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   background: rgba(255, 255, 255, 0.5);
   z-index: -1;
-  pointer-events: none; /* Mejorar interacción */
+  pointer-events: none;
 }
 
-/* Pantalla de introducción */
 #intro {
   height: 100vh;
   display: flex;
@@ -66,7 +66,6 @@ body::before {
   font-weight: 400;
 }
 
-/* Contenido principal */
 #main {
   display: none;
   opacity: 0;
@@ -80,7 +79,6 @@ body::before {
   opacity: 1;
 }
 
-/* Fullpage configuration */
 #fullpage {
   position: relative;
   height: 100vh;
@@ -104,7 +102,6 @@ body::before {
   align-items: center !important;
 }
 
-/* Mensaje superior */
 .mensaje {
   position: fixed;
   top: 0;
@@ -120,7 +117,6 @@ body::before {
   font-family: 'Helvetica Neue', Arial, sans-serif;
 }
 
-/* Secciones */
 .section {
   height: calc(100vh - 80px);
   padding: 30px;
@@ -131,8 +127,8 @@ body::before {
   text-align: center;
   background-color: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(5px);
-  border-radius: 15px;
-  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-lg);
   margin: 0 auto;
   max-width: 90%;
   width: 90%;
@@ -145,9 +141,8 @@ body::before {
   padding: 0 20px;
 }
 
-/* Tipografía */
 h1, h2, h3 {
-  color: #40916c;
+  color: var(--color-primary);
   text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
   font-family: 'Helvetica Neue', Arial, sans-serif;
   font-weight: 400;
@@ -160,26 +155,18 @@ h1, h2, h3 {
   font-weight: 300;
 }
 
-/* Mapa */
 #mapa-container {
-  width: 85vw;           /* Ocupa el 85% del ancho disponible */
-  aspect-ratio: 3/2;     /* Proporción 3 ancho x 2 alto (más equilibrada) */
-  max-width: 1000px;     /* Límite máximo para no estirar demasiado */
-  max-height: 70vh;      /* Límite de altura máxima */
-  margin: 1.5rem auto;   /* Espaciado vertical moderado */
+  width: 85vw;
+  aspect-ratio: 3/2;
+  max-width: 1000px;
+  max-height: 70vh;
+  margin: 1.5rem auto;
   border-radius: var(--border-radius-lg);
   background: white;
   overflow: hidden;
   box-shadow: var(--shadow-lg);
 }
 
-.leaflet-foto-marker {
-  border-radius: 50%;
-  border: 3px solid white;
-  box-shadow: 0 0 10px rgba(0,0,0,0.3);
-}
-
-/* Galería */
 #galeria-container {
   display: flex;
   flex-wrap: wrap;
@@ -192,20 +179,16 @@ h1, h2, h3 {
   width: 150px;
   border-radius: 1rem;
   transition: transform 0.2s;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
+  aspect-ratio: 1/1;
+  object-fit: cover;
 }
 
 #galeria-container img:hover {
   transform: scale(1.05);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-lg);
 }
 
-.marcador-multi {
-  animation: latido 1.5s infinite;
-  font-size: 22px;
-}
-
-/* Estilos para los popups */
 .popup-content {
   max-width: 250px;
 }
@@ -225,12 +208,6 @@ h1, h2, h3 {
   box-shadow: 0 2px 10px rgba(0,0,0,0.2);
 }
 
-/* Asegúrate que LightGallery funcione en los popups */
-.lg-outer .lg-img-wrap {
-  padding: 20px;
-}
-
-/* Estilos para la línea de tiempo */
 .timeline-container {
   position: relative;
   max-width: 1200px;
@@ -317,30 +294,6 @@ h1, h2, h3 {
   background: var(--color-secondary);
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .timeline-container::before {
-    left: 31px;
-  }
-  
-  .timeline-event {
-    width: 100%;
-    padding-left: 70px;
-    padding-right: 25px;
-  }
-  
-  .timeline-event.right {
-    left: 0;
-  }
-  
-  .timeline-event.left .timeline-icon,
-  .timeline-event.right .timeline-icon {
-    left: 15px;
-    right: auto;
-  }
-}
-
-/* Estilos para el mensaje especial */
 .mensaje-especial {
   text-align: center;
   max-width: 800px;
@@ -350,18 +303,6 @@ h1, h2, h3 {
   border-radius: var(--border-radius-lg);
 }
 
-.mensaje-especial h1 {
-  font-size: 3rem;
-  color: var(--color-primary);
-  margin-bottom: 1rem;
-}
-
-.mensaje-especial p {
-  font-size: 1.5rem;
-  color: var(--color-secondary);
-}
-
-/* Estilos para el contador */
 .contador-tiempo {
   text-align: center;
   width: 100%;
@@ -395,14 +336,58 @@ h1, h2, h3 {
   opacity: 0.9;
 }
 
-/* Ajuste de secciones */
-.section-content {
-  padding-top: 20px;
-  padding-bottom: 20px;
+@keyframes latido {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
 }
 
-/* Responsive para contador */
+#error-message {
+  display: none; 
+  position: fixed; 
+  top: 0; 
+  left: 0; 
+  width: 100%; 
+  background: #ff6b6b; 
+  color: white; 
+  padding: 15px; 
+  text-align: center; 
+  z-index: 10000;
+}
+
 @media (max-width: 768px) {
+  .section {
+    width: 95%;
+    margin: 0 auto;
+    padding: 25px 15px;
+    border-radius: 10px;
+  }
+
+  #mapa-container {
+    width: 95%;
+    height: 50vh;
+  }
+
+  .timeline-container::before {
+    left: 31px;
+  }
+  
+  .timeline-event {
+    width: 100%;
+    padding-left: 70px;
+    padding-right: 25px;
+  }
+  
+  .timeline-event.right {
+    left: 0;
+  }
+  
+  .timeline-event.left .timeline-icon,
+  .timeline-event.right .timeline-icon {
+    left: 15px;
+    right: auto;
+  }
+
   .contador {
     flex-direction: column;
     gap: 1rem;
@@ -416,36 +401,9 @@ h1, h2, h3 {
   .mensaje-especial h1 {
     font-size: 2rem;
   }
-  
-  .mensaje-especial p {
-    font-size: 1.2rem;
-  }
-}
-
-@keyframes latido {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.3); }
-  100% { transform: scale(1); }
-}
-
-/* Responsive Design - Versión Mejorada */
-@media (max-width: 768px) {
-  /* Ajustes generales para tablet */
-  .section {
-    width: 95%;
-    margin: 0 auto;
-    padding: 25px 15px;
-    border-radius: 10px;
-  }
-
-  #mapa-container {
-    width: 95%;
-    height: 50vh;
-  }
 }
 
 @media (max-width: 600px) {
-  /* Pantallas pequeñas (móviles grandes) */
   #intro img {
     width: 80px;
   }
@@ -468,7 +426,7 @@ h1, h2, h3 {
   }
 
   #galeria-container img {
-    width: calc(50% - 15px); /* 2 columnas */
+    width: calc(50% - 15px);
     max-width: 120px;
     margin: 0;
   }
@@ -484,7 +442,6 @@ h1, h2, h3 {
 }
 
 @media (max-width: 480px) {
-  /* Móviles pequeños */
   #intro img {
     width: 70px;
   }
@@ -494,7 +451,7 @@ h1, h2, h3 {
   }
 
   #galeria-container img {
-    width: calc(50% - 10px); /* 2 columnas ajustadas */
+    width: calc(50% - 10px);
     max-width: 100px;
   }
 
@@ -510,9 +467,8 @@ h1, h2, h3 {
 }
 
 @media (max-width: 360px) {
-  /* Dispositivos muy pequeños */
   #galeria-container img {
-    width: 100%; /* 1 columna */
+    width: 100%;
     max-width: none;
   }
   
