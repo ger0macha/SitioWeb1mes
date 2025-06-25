@@ -158,6 +158,9 @@ async function initMap() {
 
   mapa.addLayer(markers);
   mapa.fitBounds(markers.getBounds().pad(0.2));
+  mapa.addEventListener('resize', () => {
+    setTimeout(() => mapa.invalidateSize(), 300);
+  });
 }
 
 // =============================================
@@ -237,10 +240,16 @@ function initFullpage() {
     scrollBar: false,
     navigation: true,
     anchors: ['mensaje', 'contador', 'linea-tiempo', 'lugares', 'memorias'],
-    scrollingSpeed: 800,
+    responsiveWidth: 320,
     afterLoad: function(origin, destination) {
       if (destination.anchor === 'lugares' && mapa) {
         setTimeout(() => mapa.invalidateSize(), 300);
+      }
+    },
+
+    afterRender: function() {
+      if (window.innerWidth < 768) {
+        setTimeout(() => fullpageInstance.reBuild(), 500);
       }
     }
   });
