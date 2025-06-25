@@ -21,12 +21,48 @@ function mostrarError(mensaje) {
 }
 
 // =============================================
+// FUNCION REPRODUCCION DE AUDIO
+// =============================================
+
+function configurarAudio() {
+  const musica = document.getElementById('musica');
+  const muteBtn = document.getElementById('mute-btn');
+  let isMuted = false;
+
+  // Configuración inicial de volumen
+  musica.volume = 0.6; // 70% de volumen inicial (ajusta entre 0 y 1)
+
+  // Efecto de fade out después de 5 segundos
+  setTimeout(() => {
+    const fadeAudio = setInterval(() => {
+      if (musica.volume > 0.3) { // Baja hasta 30% (ajustable)
+        musica.volume -= 0.05;
+      } else {
+        clearInterval(fadeAudio);
+      }
+    }, 200); // Ajusta la velocidad del fade
+  }, 5000);
+
+  // Botón mute/unmute
+  muteBtn.addEventListener('click', () => {
+    isMuted = !isMuted;
+    musica.muted = isMuted;
+    muteBtn.textContent = isMuted ? '🔇' : '🔊';
+    
+    // Vibración táctil si es móvil
+    if (navigator.vibrate) navigator.vibrate(50);
+  });
+}
+
+// =============================================
 // FUNCIÓN PARA CARGAR DATOS DESDE SHEETS
 // =============================================
 async function cargarDatosDesdeSheets() {
   try {
-    const url = `https://opensheet.elk.sh/${SHEET_ID}/${SHEET_NAME}`;
-    const response = await fetch(url);
+    const url = `https://opensheet.elk.sh/${SHEET_ID}/${SHEET_NAME}?t=${Date.now()}`;
+    const response = await fetch(url, {
+      cache: 'no-store'
+    });
     
     if (!response.ok) throw new Error(`Error HTTP ${response.status}`);
     
@@ -215,41 +251,13 @@ function initFullpage() {
 // =============================================
 function actualizarContador(fechaInicio) {
   const ahora = new Date();
+  const diff = ahora - fechaInicio;
   
-  if (fechaInicio > ahora) {
-    console.error("La fecha de inicio es futura");
-    return;
-  }
+  const meses = Math.floor(diff / (1000 * 60 * 60 * 24 * 30.44));
+  const diasResto = Math.floor(diff % (1000 * 60 * 60 * 24 * 30.44));
+  const dias = Math.floor(diasResto / (1000 * 60 * 60 * 24));
+  const horas = ahora.getHours();
 
-  // Calcular meses completos
-  let meses = (ahora.getFullYear() - fechaInicio.getFullYear()) * 12;
-  meses += ahora.getMonth() - fechaInicio.getMonth();
-  
-  // Ajuste para días incompletos
-  if (ahora.getDate() < fechaInicio.getDate()) {
-    meses--;
-  }
-
-  // Calcular días restantes
-  const fechaBase = new Date(fechaInicio);
-  fechaBase.setMonth(fechaBase.getMonth() + meses);
-  
-  let dias = Math.floor((ahora - fechaBase) / (1000 * 60 * 60 * 24));
-  
-  // Ajuste de casos especiales
-  if (dias < 0) {
-    meses--;
-    fechaBase.setMonth(fechaBase.getMonth() - 1);
-    dias = Math.floor((ahora - fechaBase) / (1000 * 60 * 60 * 24));
-  }
-
-  // Calcular horas del día actual
-  const inicioDia = new Date(ahora);
-  inicioDia.setHours(0, 0, 0, 0);
-  
-  const horas = Math.floor((ahora - inicioDia) / (1000 * 60 * 60));
-
-  // Actualizar DOM
   document.getElementById('meses').textContent = meses;
   document.getElementById('dias').textContent = dias;
   document.getElementById('horas').textContent = horas;
@@ -322,13 +330,17 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Reproducir música con manejo de errores
     try {
-      musica.play();
+      configurarAudio();
+      await musica.play();
     } catch (e) {
-      console.log("Auto-play bloqueado:", e);
+      console.log("Auto-play bloqueado:", e)
+      mostrarError("Toca el botón 🔊 para activar el audio");
     }
     
-    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
-    
+    if (navigator.vibrate && window.matchMedia('(hover: none)').matches) {
+      navigator.vibrate([200, 100, 200]);
+    }
+
     intro.style.opacity = '0';
     
     setTimeout(() => {
@@ -340,7 +352,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Iniciar contador
         actualizarContador(FECHA_INICIO);
-        setInterval(() => actualizarContador(FECHA_INICIO), 3600000);
+        setInterval(() => actualizarContador(FECHA_INICIO), 60000);
         
         // Cargar datos y componentes
         await cargarDatosYComponentes();
