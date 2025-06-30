@@ -1,13 +1,22 @@
 // =============================================
 // CONFIGURACIÓN PRINCIPAL
 // =============================================
+
+// Verifica que fullpage.js esté cargado
+if (typeof fullpage === 'undefined') {
+  console.error('fullPage.js no está cargado correctamente');
+  mostrarError("Error crítico: Por favor recarga la página");
+} else {
+  console.log('fullPage.js cargado correctamente');
+}
+
 const SHEET_ID = "1m5TOfOxH_itvSyxCQ5lvQEtH6HwZfH7bsdWryHK5diI";
 const SHEET_NAME = "ubi";
 
 // =============================================
 // VARIABLES GLOBALES
 // =============================================
-let mapa, fullpageInstance;
+let mapa;
 let ubicacionesGlobales = [];
 
 // =============================================
@@ -15,9 +24,11 @@ let ubicacionesGlobales = [];
 // =============================================
 function mostrarError(mensaje) {
   const errorEl = document.getElementById('error-message');
-  errorEl.textContent = mensaje;
-  errorEl.style.display = 'block';
-  setTimeout(() => errorEl.style.display = 'none', 5000);
+  if (errorEl) {
+    errorEl.textContent = mensaje;
+    errorEl.style.display = 'block';
+    setTimeout(() => errorEl.style.display = 'none', 5000);
+  }
 }
 
 // =============================================
@@ -27,20 +38,23 @@ function mostrarError(mensaje) {
 function configurarAudio() {
   const musica = document.getElementById('musica');
   const muteBtn = document.getElementById('mute-btn');
+  
+  if (!musica || !muteBtn) return;
+  
   let isMuted = false;
 
   // Configuración inicial de volumen
-  musica.volume = 0.6; // 70% de volumen inicial (ajusta entre 0 y 1)
+  musica.volume = 0.6;
 
   // Efecto de fade out después de 5 segundos
   setTimeout(() => {
     const fadeAudio = setInterval(() => {
-      if (musica.volume > 0.3) { // Baja hasta 30% (ajustable)
+      if (musica.volume > 0.3) {
         musica.volume -= 0.05;
       } else {
         clearInterval(fadeAudio);
       }
-    }, 200); // Ajusta la velocidad del fade
+    }, 200);
   }, 5000);
 
   // Botón mute/unmute
@@ -76,13 +90,25 @@ async function cargarDatosDesdeSheets() {
           coordenadas.push(Number(item['coordenadas/1']));
         }
         
+        // Rutas corregidas - ahora apuntando directamente a /fotos/
+        let fotoPath = '';
+        if (item.foto) {
+          // Eliminar espacios y normalizar nombre
+          const cleanName = item.foto.trim()
+            .replace(/\s+/g, '_') // Reemplazar espacios con guiones bajos
+            .toLowerCase();
+          
+          // Ruta directa a la carpeta fotos
+          fotoPath = `fotos/${cleanName}`;
+        }
+        
         return {
           titulo: item.titulo || 'Sin título',
           fecha: item.fecha || '',
           fechaObj: item.fecha ? new Date(item.fecha) : new Date(),
           descripcion: item.descripcion || '',
           icono: item.icono || '❤️',
-          foto: item.foto || '',
+          foto: fotoPath, // Usamos la ruta modificada
           coordenadas: coordenadas
         };
       })
@@ -158,8 +184,23 @@ async function initMap() {
 
   mapa.addLayer(markers);
   mapa.fitBounds(markers.getBounds().pad(0.2));
-  mapa.addEventListener('resize', () => {
-    setTimeout(() => mapa.invalidateSize(), 300);
+
+  window.addEventListener('resize', () => {
+    setTimeout(() => {
+      if (mapa) {
+        mapa.invalidateSize();
+        mapa.fitBounds(markers.getBounds().pad(0.2));
+      }
+    }, 300);
+  });
+
+  window.addEventListener("orientationchange", () => {
+    setTimeout(() => {
+      if (mapa) {
+        mapa.invalidateSize();
+        mapa.fitBounds(markers.getBounds().pad(0.2));
+      }
+    }, 500);
   });
 }
 
@@ -170,9 +211,17 @@ function crearLineaDeTiempo() {
   const contenedor = document.createElement('div');
   contenedor.className = 'timeline-container';
   
+  const isMobile = window.innerWidth < 768;
+  
   ubicacionesGlobales.forEach((ubicacion, index) => {
     const evento = document.createElement('div');
-    evento.className = `timeline-event ${index % 2 === 0 ? 'left' : 'right'}`;
+
+    if (isMobile) {
+      evento.className = 'timeline-event mobile';
+    } else {
+      evento.className = `timeline-event ${index % 2 === 0 ? 'left' : 'right'}`;
+
+    }
     
     evento.innerHTML = `
       <div class="timeline-content">
@@ -202,6 +251,8 @@ function crearLineaDeTiempo() {
 // =============================================
 function crearGaleria() {
   const galeriaContainer = document.getElementById('galeria-container');
+  if (!galeriaContainer) return;
+  
   galeriaContainer.innerHTML = '';
   
   ubicacionesGlobales.filter(ubicacion => ubicacion.foto).forEach(ubicacion => {
@@ -211,9 +262,17 @@ function crearGaleria() {
     link.dataset.subHtml = `<h4>${ubicacion.titulo}</h4><p>${ubicacion.descripcion}</p>`;
     
     const img = document.createElement('img');
-    img.src = ubicacion.foto;
+    img.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23f5f5f5' width='100' height='100'/%3E%3C/svg%3E";
+    img.dataset.src = ubicacion.foto;
+    img.classList.add('lazyload');
     img.alt = ubicacion.descripcion;
     img.loading = 'lazy';
+    
+    // Añadir manejador de error por si la imagen no existe
+    img.onerror = function() {
+      this.src = 'assets/placeholder.jpg'; // Imagen de respaldo
+      this.onerror = null; // Prevenir bucles infinitos
+    };
     
     link.appendChild(img);
     galeriaContainer.appendChild(link);
@@ -221,7 +280,10 @@ function crearGaleria() {
 }
 
 function initGallery() {
-  lightGallery(document.getElementById('galeria-container'), {
+  const galeriaContainer = document.getElementById('galeria-container');
+  if (!galeriaContainer) return;
+  
+  lightGallery(galeriaContainer, {
     plugins: [lgZoom],
     speed: 500,
     download: false
@@ -229,30 +291,96 @@ function initGallery() {
 }
 
 // =============================================
-// FULLPAGE - CONFIGURACIÓN
+// FULLPAGE - CONFIGURACIÓN CORREGIDA
 // =============================================
 function initFullpage() {
-  if (fullpageInstance) fullpage.destroy('all');
-  
-  fullpageInstance = new fullpage('#fullpage', {
+  // Destruir instancia existente si hay una
+  if (window.fullpageInstance) {
+    try {
+      fullpage.destroy('all');
+    } catch (e) {
+      console.log("Error al destruir instancia previa:", e);
+    }
+  }
+
+  // Configuración con callbacks corregidos
+  const fpOptions = {
     licenseKey: 'OPEN-SOURCE-GPLV3-LICENSE',
     autoScrolling: true,
     scrollBar: false,
     navigation: true,
     anchors: ['mensaje', 'contador', 'linea-tiempo', 'lugares', 'memorias'],
-    responsiveWidth: 320,
-    afterLoad: function(origin, destination) {
-      if (destination.anchor === 'lugares' && mapa) {
-        setTimeout(() => mapa.invalidateSize(), 300);
+    responsiveWidth: 400,
+    scrollOverflow: true,
+    responsiveHeight: 600,
+
+    // Usamos arrow function para mantener el contexto
+    afterResponsive: (isResponsive) => {
+      if (!window.fullpageInstance) return;
+      
+      try {
+        if (isResponsive) {
+          window.fullpageInstance.setAutoScrolling(false);
+          window.fullpageInstance.setFitToSection(false);
+        } else {
+          window.fullpageInstance.setAutoScrolling(true);
+          window.fullpageInstance.setFitToSection(true);
+        }
+      } catch (e) {
+        console.error("Error en afterResponsive:", e);
       }
     },
 
-    afterRender: function() {
-      if (window.innerWidth < 768) {
-        setTimeout(() => fullpageInstance.reBuild(), 500);
+    afterLoad: (origin, destination) => {
+      if (destination && destination.anchor === 'lugares' && mapa) {
+        setTimeout(() => {
+          try {
+            mapa.invalidateSize();
+          } catch (e) {
+            console.error("Error redimensionando mapa:", e);
+          }
+        }, 300);
+      }
+      
+      // Forzar redibujado en móviles
+      if (window.innerWidth < 768 && window.fullpageInstance) {
+        setTimeout(() => {
+          try {
+            window.fullpageInstance.reBuild();
+            document.querySelectorAll('.section').forEach(section => {
+              section.style.transform = 'none';
+            });
+          } catch (e) {
+            console.error("Error al reconstruir fullpage:", e);
+          }
+        }, 100);
+      }
+    },
+
+    afterRender: () => {
+      if (window.innerWidth < 768 && window.fullpageInstance) {
+        setTimeout(() => {
+          try {
+            window.fullpageInstance.reBuild();
+            document.querySelectorAll('.section').forEach(section => {
+              section.style.transform = 'none';
+            });
+          } catch (e) {
+            console.error("Error al reconstruir fullpage:", e);
+          }
+        }, 300);
       }
     }
-  });
+  };
+
+  // Crear nueva instancia
+  try {
+    window.fullpageInstance = new fullpage('#fullpage', fpOptions);
+    console.log("Fullpage inicializado correctamente");
+  } catch (e) {
+    console.error("Error al inicializar fullpage:", e);
+    mostrarError("Error al cargar la página. Por favor recarga.");
+  }
 }
 
 // =============================================
@@ -281,15 +409,21 @@ function configurarBotonesTimeline() {
       const index = parseInt(this.getAttribute('data-index'));
       const ubicacion = ubicacionesGlobales[index];
       
+      if (!mapa) return;
+      
       mapa.setView(ubicacion.coordenadas, 15);
       setTimeout(() => {
+        if (!mapa) return;
+        
         const marker = Object.values(mapa._layers)
           .find(layer => layer instanceof L.Marker && 
                 layer.getLatLng().equals(ubicacion.coordenadas));
         if (marker) marker.openPopup();
       }, 500);
       
-      fullpageInstance.moveTo('lugares');
+      if (window.fullpageInstance) {
+        window.fullpageInstance.moveTo('lugares');
+      }
     });
   });
 }
@@ -300,16 +434,24 @@ function configurarBotonesTimeline() {
 async function cargarDatosYComponentes() {
   try {
     ubicacionesGlobales = await cargarDatosDesdeSheets();
+     
+    // Verificación de rutas de imágenes
+    console.log("Ubicaciones cargadas:", ubicacionesGlobales);
+    ubicacionesGlobales.filter(u => u.foto).forEach(u => {
+      console.log(`Ruta de imagen para ${u.titulo}:`, u.foto);
+    });
     
     initFullpage();
     initMap();
-    
     crearGaleria();
     initGallery();
     
     const timeline = crearLineaDeTiempo();
-    document.getElementById('linea-tiempo-container').innerHTML = '';
-    document.getElementById('linea-tiempo-container').appendChild(timeline);
+    const timelineContainer = document.getElementById('linea-tiempo-container');
+    if (timelineContainer) {
+      timelineContainer.innerHTML = '';
+      timelineContainer.appendChild(timeline);
+    }
     
     configurarBotonesTimeline();
     
@@ -328,6 +470,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const intro = document.getElementById('intro');
   const main = document.getElementById('main');
   
+  if (!carta || !musica || !intro || !main) return;
+  
   let cartaAbierta = false;
   const FECHA_INICIO = new Date('2025-05-14');
   
@@ -336,6 +480,11 @@ document.addEventListener('DOMContentLoaded', () => {
     cartaAbierta = true;
     
     carta.src = 'https://cdn-icons-png.flaticon.com/512/1925/1925282.png';
+
+    carta.style.transform = 'rotate(10deg) scale(1.1)';
+    setTimeout(() => {
+      carta.style.transform = 'rotate(0) scale(1)'; 
+    }, 300);
     
     // Reproducir música con manejo de errores
     try {

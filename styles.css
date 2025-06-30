@@ -400,6 +400,44 @@ h1, h2, h3 {
   color: white;
 }
 
+.timeline-content {
+  transition: all 0.3s ease;
+}
+
+.timeline-content:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.lazyload {
+  position: relative;
+  background: #f5f5f5;
+  overflow: hidden;
+}
+
+.lazyload::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, 
+    rgba(255,255,255,0) 0%, 
+    rgba(255,255,255,0.8) 50%, 
+    rgba(255,255,255,0) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.lazyloaded::after {
+  display: none;
+}
 
 /* Precarga de fuentes (opcional) */
 @font-face {
@@ -411,56 +449,95 @@ h1, h2, h3 {
 }
 
 @media (max-width: 768px) {
-  .fp-section {
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-    justify-content: flex-start !important; /* Cambio clave */
-    padding-top: 20vh !important; /* Espacio superior */
-    align-items: flex-start !important;
-  }
-  
-  .section {
-    width: 95% !important;
-    margin: 0 auto !important;
-    padding: 20px 15px !important;
-    margin-top: 10vh !important;
-  }
-
-  .mensaje {
-    position: absolute !important; /* Cambia de fixed a absolute */
-    top: 5px !important;
-    padding: 0.5rem !important;
-    font-size: 0.9em !important;
-  }
-  
   .mensaje h1 {
-    font-size: 1.5rem !important;
-    margin-bottom: 5px !important;
+    font-size: 2rem;
   }
-}
 
-@media (max-width: 480px) {
-  .fp-section {
-    padding-top: 15vh !important; /* Ajuste para pantallas más pequeñas */
-  }
-  
   .section {
-    transform: translateY(-5%); /* Ajuste más fino */
-    width: 98% !important;
+    padding: 15px;
+    max-width: 95%;
+    width: 95%;
+  }
+
+  .contador {
+    gap: 1rem;
+  }
+
+  .contador-item {
+    padding: 1rem;
+    min-width: 80px;
+  }
+
+  .contador-item span {
+    font-size: 2rem;
+  }
+
+  /* Línea de tiempo vertical en móviles */
+  .timeline-container::before {
+    left: 30px;
+  }
+
+  .timeline-event {
+    width: 100%;
+    padding-left: 70px;
+    padding-right: 20px;
+    left: 0 !important;
+  }
+
+  .timeline-event .timeline-icon {
+    left: 20px;
+    right: auto;
+    top: 20px;
+  }
+
+  .timeline-content {
+    padding: 15px;
+  }
+
+  /* Galería móvil */
+  #galeria-container img {
+    width: 120px;
+  }
+
+  /* Mapa móvil */
+  #mapa-container {
+    width: 95vw;
+    max-height: 50vh;
   }
 }
 
+/* Móviles pequeños */
+@media (max-width: 480px) {
+  .mensaje h1 {
+    font-size: 1.8rem;
+  }
+
+  .contador {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .contador-item {
+    width: 100%;
+    max-width: 150px;
+  }
+
+  #galeria-container img {
+    width: 100px;
+  }
+
+  .mensaje-especial, .contador-tiempo {
+    padding: 1rem;
+  }
+}
+
+/* Pantallas muy pequeñas */
 @media (max-width: 360px) {
   #galeria-container img {
-    width: 100%;
-    max-width: none;
+    width: 80px;
   }
   
-  .mensaje h1 {
-    font-size: 1.4rem;
-  }
-
-  .section {
-    margin-top: 5vh !important;
+  #intro p {
+    font-size: 1rem;
   }
 }
