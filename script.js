@@ -213,14 +213,18 @@ function crearLineaDeTiempo() {
   
   const isMobile = window.innerWidth < 768;
   
+  // Ajustar línea central para móviles
+  if (isMobile) {
+    contenedor.style.setProperty('--line-position', '30px');
+  }
+  
   ubicacionesGlobales.forEach((ubicacion, index) => {
     const evento = document.createElement('div');
-
+    
     if (isMobile) {
       evento.className = 'timeline-event mobile';
     } else {
       evento.className = `timeline-event ${index % 2 === 0 ? 'left' : 'right'}`;
-
     }
     
     evento.innerHTML = `
@@ -262,33 +266,53 @@ function crearGaleria() {
     link.dataset.subHtml = `<h4>${ubicacion.titulo}</h4><p>${ubicacion.descripcion}</p>`;
     
     const img = document.createElement('img');
-    img.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23f5f5f5' width='100' height='100'/%3E%3C/svg%3E";
-    img.dataset.src = ubicacion.foto;
-    img.classList.add('lazyload');
+    const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23f5f5f5' width='100' height='100'/%3E%3C/svg%3E";
+    
+    // Cargar directamente la imagen en lugar de usar lazy load
+    img.src = ubicacion.foto;
     img.alt = ubicacion.descripcion;
     img.loading = 'lazy';
     
-    // Añadir manejador de error por si la imagen no existe
     img.onerror = function() {
-      this.src = 'assets/placeholder.jpg'; // Imagen de respaldo
-      this.onerror = null; // Prevenir bucles infinitos
+      this.src = 'assets/placeholder.jpg';
+      this.onerror = null;
     };
     
     link.appendChild(img);
     galeriaContainer.appendChild(link);
   });
+  
+  // Inicializar la galería inmediatamente
+  initGallery();
 }
 
 function initGallery() {
   const galeriaContainer = document.getElementById('galeria-container');
   if (!galeriaContainer) return;
   
-  lightGallery(galeriaContainer, {
+  // Destruir instancia previa si existe
+  if (window.galleryInstance) {
+    try {
+      window.galleryInstance.destroy();
+    } catch(e) {
+      console.log("Error destruyendo galería previa:", e);
+    }
+  }
+  
+  // Crear nueva instancia
+  window.galleryInstance = lightGallery(galeriaContainer, {
+    selector: 'a.gallery-item', // Selector específico
     plugins: [lgZoom],
     speed: 500,
-    download: false
+    download: false,
+    mobileSettings: {
+      showCloseIcon: true,
+      download: false
+    }
   });
 }
+
+
 
 // =============================================
 // FULLPAGE - CONFIGURACIÓN CORREGIDA
