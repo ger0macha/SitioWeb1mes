@@ -266,15 +266,20 @@ function crearGaleria() {
     link.dataset.subHtml = `<h4>${ubicacion.titulo}</h4><p>${ubicacion.descripcion}</p>`;
     
     const img = document.createElement('img');
-    const placeholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23f5f5f5' width='100' height='100'/%3E%3C/svg%3E";
-    
-    // Cargar directamente la imagen en lugar de usar lazy load
+    // Usar el atributo nativo loading="lazy" del navegador
     img.src = ubicacion.foto;
     img.alt = ubicacion.descripcion;
     img.loading = 'lazy';
+    img.style.opacity = '0';
+    img.style.transition = 'opacity 0.3s';
+    
+    img.onload = function() {
+      this.style.opacity = '1';
+    };
     
     img.onerror = function() {
       this.src = 'assets/placeholder.jpg';
+      this.style.opacity = '1';
       this.onerror = null;
     };
     
@@ -282,34 +287,35 @@ function crearGaleria() {
     galeriaContainer.appendChild(link);
   });
   
-  // Inicializar la galería inmediatamente
-  initGallery();
+  // Inicializar la galería después de un pequeño retraso para asegurar que el DOM está listo
+  setTimeout(initGallery, 100);
 }
 
 function initGallery() {
   const galeriaContainer = document.getElementById('galeria-container');
-  if (!galeriaContainer) return;
+  if (!galeriaContainer || !lightGallery) return;
   
-  // Destruir instancia previa si existe
-  if (window.galleryInstance) {
-    try {
+  try {
+    // Destruir instancia previa si existe
+    if (window.galleryInstance) {
       window.galleryInstance.destroy();
-    } catch(e) {
-      console.log("Error destruyendo galería previa:", e);
     }
+    
+    // Crear nueva instancia con configuración optimizada
+    window.galleryInstance = lightGallery(galeriaContainer, {
+      selector: 'a.gallery-item',
+      plugins: [lgZoom],
+      speed: 300,
+      download: false,
+      mobileSettings: {
+        controls: true,
+        showCloseIcon: true,
+        download: false
+      }
+    });
+  } catch (e) {
+    console.error("Error inicializando galería:", e);
   }
-  
-  // Crear nueva instancia
-  window.galleryInstance = lightGallery(galeriaContainer, {
-    selector: 'a.gallery-item', // Selector específico
-    plugins: [lgZoom],
-    speed: 500,
-    download: false,
-    mobileSettings: {
-      showCloseIcon: true,
-      download: false
-    }
-  });
 }
 
 

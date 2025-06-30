@@ -95,6 +95,7 @@ body::before {
   width: 100% !important;
   padding-top: calc(20px + var(--safe-area-inset-top)) !important;
   box-sizing: border-box;
+  overflow: hidden !important;
 }
 
 .fp-slide {
@@ -132,8 +133,9 @@ body::before {
   border-radius: var(--border-radius-lg);
   box-shadow: var(--shadow-lg);
   margin: 0 auto;
-  max-width: 90%;
+  max-width: 80vh !important;
   width: 90%;
+  overflow: auto !important;
 }
 
 .section-content {
@@ -141,6 +143,8 @@ body::before {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
+  max-height: 100%;
+  overflow: visible;
 }
 
 h1, h2, h3 {
@@ -177,18 +181,34 @@ h1, h2, h3 {
   padding: 15px;
 }
 
+#galeria-container a {
+  display: block;
+  width: 150px;
+  height: 150px;
+  overflow: hidden;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  transition: transform 0.3s;
+}
+
 #galeria-container img {
   width: 150px;
   border-radius: 1rem;
-  transition: transform 0.2s;
+  transition: transform 0.2s, opacity 0.3s;
+  opacity: 0.9;
   box-shadow: var(--shadow-md);
   aspect-ratio: 1/1;
   object-fit: cover;
 }
 
+#galeria-container a:hover {
+  transform: scale(1.05);
+}
+
 #galeria-container img:hover {
   transform: scale(1.05);
   box-shadow: var(--shadow-lg);
+  opacity: 1;
 }
 
 .popup-content {
@@ -211,6 +231,9 @@ h1, h2, h3 {
 }
 
 .timeline-container {
+  max-height: 60vh;
+  overflow-y: auto;
+  width: 100%;
   position: relative;
   max-width: 1200px;
   margin: 0 auto;
@@ -444,6 +467,7 @@ h1, h2, h3 {
   display: none;
 }
 
+
 /* Precarga de fuentes (opcional) */
 @font-face {
   font-family: 'Helvetica Neue';
@@ -459,7 +483,8 @@ h1, h2, h3 {
   }
 
   .section {
-    padding: 15px;
+    max-height: 75vh !important;
+    padding: 15px 10px;
     max-width: 95%;
     width: 95%;
   }
@@ -505,10 +530,9 @@ h1, h2, h3 {
   }
   
   #galeria-container img {
-    width: calc(50% - 4px) !important;
-    border-radius: 8px !important;
+    width: 100% !important;
+    border-radius: auto !important;
     aspect-ratio: 1/1;
-    object-fit: cover;
   }
   
   .lg-backdrop {
@@ -523,24 +547,22 @@ h1, h2, h3 {
     font-size: 14px !important;
     padding: 5px !important;
   }
-}
-
-/* Precarga mejorada */
-#galeria-container img {
-  transition: transform 0.2s, opacity 0.3s;
-  opacity: 0.9;
-}
-
-#galeria-container img:hover {
-  opacity: 1;
-  transform: scale(1.05);
-
-  /* Mapa móvil */
+  
+  #galeria-container a {
+    width: calc(50% - 10px);
+    height: auto;
+    aspect-ratio: 1/1;
+  }
+  
+/* Mapa móvil */
   #mapa-container {
     width: 95vw;
     max-height: 50vh;
   }
 }
+
+
+
 
 /* Móviles pequeños */
 @media (max-width: 480px) {
@@ -558,19 +580,20 @@ h1, h2, h3 {
     max-width: 150px;
   }
 
-  #galeria-container img {
-    width: 100px;
-  }
-
   .mensaje-especial, .contador-tiempo {
     padding: 1rem;
+  }
+
+  #galeria-container a {
+    width: calc(50% - 5px);
   }
 }
 
 /* Pantallas muy pequeñas */
 @media (max-width: 360px) {
-  #galeria-container img {
-    width: 80px;
+  #galeria-container a {
+    width: 100%;
+    max-width: 150px;
   }
   
   #intro p {
