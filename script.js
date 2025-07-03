@@ -332,6 +332,9 @@ function initFullpage() {
       console.log("Error al destruir instancia previa:", e);
     }
   }
+  
+  const mensajeEl = document.querySelector('.mensaje');
+  const audioControls = document.getElementById('audio-controls');
 
   // Configuración con callbacks corregidos
   const fpOptions = {
@@ -362,6 +365,15 @@ function initFullpage() {
     },
 
     afterLoad: (origin, destination) => {
+// Ocultar el mensaje cuando se sale de la primera sección
+      if (destination.anchor === 'mensaje') {
+        mensajeEl.classList.remove('hidden');
+        audioControls.classList.remove('hidden');
+      } else {
+        mensajeEl.classList.add('hidden');
+        audioControls.classList.add('hidden');
+      }
+
       if (destination && destination.anchor === 'lugares' && mapa) {
         setTimeout(() => {
           try {
