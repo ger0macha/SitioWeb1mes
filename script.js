@@ -346,6 +346,7 @@ function initFullpage() {
     responsiveWidth: 400,
     scrollOverflow: true,
     responsiveHeight: 600,
+    normalScrollElements: '.section-content, .timeline-container, #galeria-container, #mapa-container, .lg-content',
 
     // Usamos arrow function para mantener el contexto
     afterResponsive: (isResponsive) => {
@@ -560,4 +561,18 @@ document.addEventListener('DOMContentLoaded', () => {
       }, 50);
     }, 300);
   });
+
+        // Configurar áreas para cambiar de slide
+  const leftControl = document.querySelector('.slide-control-left');
+  const rightControl = document.querySelector('.slide-control-right');
+      
+  if (leftControl && rightControl && fullpageInstance) {
+    leftControl.addEventListener('click', () => {
+      fullpageInstance.moveSlideLeft();
+    });
+        
+    rightControl.addEventListener('click', () => {
+      fullpageInstance.moveSlideRight();
+    });
+  }
 });
