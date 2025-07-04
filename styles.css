@@ -576,9 +576,9 @@ h1, h2, h3 {
   }
 
   .section {
-    height: calc(100vh - 60px);
+    height: 100%;
     padding: 15px;
-    max-width: 95%;
+    width: auto;
   }
   
   .section h2 {
@@ -610,8 +610,8 @@ h1, h2, h3 {
 
   .timeline-event {
     width: 100%;
-    padding-left: 70px;
-    padding-right: 20px;
+    padding-left: 65px;
+    padding-right: 15px;
     left: 0 !important;
   }
 
@@ -626,8 +626,8 @@ h1, h2, h3 {
   }
 
   #galeria-container {
-    gap: 8px;
-    padding: 8px;
+    gap: 10px;
+    padding: 10px;
   }
   
   #galeria-container img {
