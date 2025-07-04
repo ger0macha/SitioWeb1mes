@@ -576,10 +576,18 @@ h1, h2, h3 {
   }
 
   .section {
-    max-height: 75vh !important;
-    padding: 15px 10px;
+    height: calc(100vh - 60px);
+    padding: 15px;
     max-width: 95%;
-    width: 95%;
+  }
+  
+  .section h2 {
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+  }
+
+  .section-content {
+    padding: 0 10px;
   }
 
   .contador {
